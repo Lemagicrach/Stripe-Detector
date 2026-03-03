@@ -1,17 +1,104 @@
-﻿import { NextResponse } from "next/server";
+// src/app/api/stripe/connect/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { handleApiError, unauthorized } from "@/lib/server-error";
+import { getStripeServerClient, getSupabaseAdminClient } from "@/lib/server-clients";
+import { encrypt } from "@/lib/encryption";
+import { handleApiError, unauthorized, badRequest } from "@/lib/server-error";
+import { checkRateLimit } from "@/lib/rate-limit";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const { allowed } = checkRateLimit({ key: "stripe-connect", limit: 10, windowMs: 60_000 });
+    if (!allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+
     const supabase = await getSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return unauthorized();
 
-    // TODO: Implement route logic
+    const url = new URL(req.url);
+    const code = url.searchParams.get("code");
+    const action = url.searchParams.get("action");
 
-    return NextResponse.json({ data: null });
+    // Initiate OAuth
+    if (action === "start") {
+      const clientId = process.env.STRIPE_CLIENT_ID;
+      const redirectUri = process.env.STRIPE_CONNECT_REDIRECT_URI;
+      if (!clientId || !redirectUri) return badRequest("Stripe Connect not configured");
+
+      const state = crypto.randomUUID();
+      const admin = getSupabaseAdminClient();
+      await admin.from("usage_events").insert({
+        user_id: user.id, event_type: "stripe_oauth_start", metadata: { state }
+      });
+
+      const oauthUrl = new URL("https://connect.stripe.com/oauth/authorize");
+      oauthUrl.searchParams.set("response_type", "code");
+      oauthUrl.searchParams.set("client_id", clientId);
+      oauthUrl.searchParams.set("scope", "read_only");
+      oauthUrl.searchParams.set("redirect_uri", redirectUri);
+      oauthUrl.searchParams.set("state", state);
+      oauthUrl.searchParams.set("stripe_user[email]", user.email || "");
+      return NextResponse.json({ url: oauthUrl.toString() });
+    }
+
+    // OAuth Callback
+    if (code) {
+      const stripe = getStripeServerClient();
+      const response = await stripe.oauth.token({ grant_type: "authorization_code", code });
+      if (!response.stripe_user_id) return badRequest("Failed to connect");
+
+      const admin = getSupabaseAdminClient();
+      const encryptedAccess = encrypt(response.access_token || "");
+      const encryptedRefresh = response.refresh_token ? encrypt(response.refresh_token) : null;
+      const account = await stripe.accounts.retrieve(response.stripe_user_id);
+
+      const { data: conn, error: connErr } = await admin
+        .from("stripe_connections")
+        .upsert({
+          user_id: user.id,
+          stripe_account_id: response.stripe_user_id,
+          account_name: account.business_profile?.name || account.settings?.dashboard?.display_name || account.email || "Connected Account",
+          encrypted_access_token: encryptedAccess,
+          encrypted_refresh_token: encryptedRefresh,
+          status: "active",
+          last_sync_at: null,
+        }, { onConflict: "user_id,stripe_account_id" })
+        .select("id").single();
+
+      if (connErr) return badRequest("Failed to save connection");
+
+      await admin.from("usage_events").insert({
+        user_id: user.id, event_type: "stripe_connected",
+        metadata: { connection_id: conn.id, account_id: response.stripe_user_id }
+      });
+
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      return NextResponse.redirect(`${appUrl}/dashboard/connect?status=success&account=${response.stripe_user_id}`);
+    }
+
+    const error = url.searchParams.get("error");
+    if (error) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      return NextResponse.redirect(`${appUrl}/dashboard/connect?status=error&reason=${error}`);
+    }
+
+    return badRequest("Missing code or action parameter");
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(error, "STRIPE_CONNECT");
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const supabase = await getSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return unauthorized();
+    const body = await req.json();
+    if (!body.connectionId) return badRequest("connectionId required");
+    const admin = getSupabaseAdminClient();
+    await admin.from("stripe_connections").update({ status: "disconnected" }).eq("id", body.connectionId).eq("user_id", user.id);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return handleApiError(error, "STRIPE_DISCONNECT");
   }
 }

@@ -5,6 +5,42 @@ import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { handleApiError, unauthorized, badRequest } from "@/lib/server-error";
 import { checkRateLimit } from "@/lib/rate-limit";
 
+type CurrentMetrics = {
+  mrr: number;
+  arr: number;
+  active_customers: number;
+  arpu: number;
+  churn_rate: number;
+  nrr: number;
+};
+
+type MrrHistoryPoint = {
+  snapshot_date: string;
+  mrr: number;
+};
+
+type RevenueLeak = {
+  category: string;
+  severity: string;
+  title: string;
+  lost_revenue: number;
+  recoverable_revenue: number;
+  status: string;
+};
+
+type RecoveryEvent = {
+  category: string;
+  amount: number;
+  recovered_at: string;
+};
+
+type CopilotContext = {
+  currentMetrics: CurrentMetrics | null;
+  mrrHistory: MrrHistoryPoint[];
+  recentLeaks: RevenueLeak[];
+  recentRecoveries: RecoveryEvent[];
+};
+
 async function assembleContext(userId: string, connectionId: string) {
   const admin = getSupabaseAdminClient();
   const [metricsRes, historyRes, leaksRes, recoveriesRes] = await Promise.all([
@@ -19,14 +55,14 @@ async function assembleContext(userId: string, connectionId: string) {
   ]);
 
   return {
-    currentMetrics: metricsRes.data?.[0] || null,
-    mrrHistory: historyRes.data || [],
-    recentLeaks: leaksRes.data || [],
-    recentRecoveries: recoveriesRes.data || [],
+    currentMetrics: ((metricsRes.data as unknown as CurrentMetrics[] | null)?.[0] ?? null),
+    mrrHistory: (historyRes.data as unknown as MrrHistoryPoint[] | null) ?? [],
+    recentLeaks: (leaksRes.data as unknown as RevenueLeak[] | null) ?? [],
+    recentRecoveries: (recoveriesRes.data as unknown as RecoveryEvent[] | null) ?? [],
   };
 }
 
-function buildSystemPrompt(context: ReturnType<typeof assembleContext> extends Promise<infer T> ? T : never) {
+function buildSystemPrompt(context: CopilotContext) {
   const m = context.currentMetrics;
   const parts = ["You are RevPilot AI, a Stripe revenue copilot. Be concise, data-driven, and action-oriented."];
 
@@ -35,19 +71,19 @@ function buildSystemPrompt(context: ReturnType<typeof assembleContext> extends P
   }
 
   if (context.mrrHistory.length > 1) {
-    const trend = context.mrrHistory.map((h: any) => `${h.snapshot_date}: $${h.mrr}`).join(", ");
+    const trend = context.mrrHistory.map((h) => `${h.snapshot_date}: $${h.mrr}`).join(", ");
     parts.push(`\nMRR Trend (30d): ${trend}`);
   }
 
   if (context.recentLeaks.length > 0) {
     const leakLines = context.recentLeaks.map(
-      (l: any) => `- [${l.severity}] ${l.title}: $${l.lost_revenue} lost, $${l.recoverable_revenue} recoverable (${l.status})`
+      (l) => `- [${l.severity}] ${l.title}: $${l.lost_revenue} lost, $${l.recoverable_revenue} recoverable (${l.status})`
     );
     parts.push(`\nDetected Revenue Leaks:\n${leakLines.join("\n")}`);
   }
 
   if (context.recentRecoveries.length > 0) {
-    const total = context.recentRecoveries.reduce((s: number, r: any) => s + (r.amount || 0), 0);
+    const total = context.recentRecoveries.reduce((s, r) => s + (r.amount || 0), 0);
     parts.push(`\nRecovered Revenue: $${total.toFixed(0)} in the last 30 days`);
   }
 
@@ -73,9 +109,10 @@ export async function POST(req: NextRequest) {
     if (!message) return badRequest("message is required");
 
     const admin = getSupabaseAdminClient();
-    const { data: connection } = await admin
+    const { data: connectionRaw } = await admin
       .from("stripe_connections").select("id")
       .eq("user_id", user.id).eq("status", "active").limit(1).single();
+    const connection = connectionRaw as unknown as { id: string } | null;
 
     const context = connection
       ? await assembleContext(user.id, connection.id)

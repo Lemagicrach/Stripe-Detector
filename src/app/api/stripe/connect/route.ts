@@ -1,10 +1,56 @@
-// src/app/api/stripe/connect/route.ts
+﻿// src/app/api/stripe/connect/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getStripeServerClient, getSupabaseAdminClient } from "@/lib/server-clients";
 import { encrypt } from "@/lib/encryption";
 import { handleApiError, unauthorized, badRequest } from "@/lib/server-error";
 import { checkRateLimit } from "@/lib/rate-limit";
+
+type UsageEventInsert = {
+  user_id: string;
+  event_type: string;
+  metadata: Record<string, unknown>;
+};
+
+type StripeConnectionUpsert = {
+  user_id: string;
+  stripe_account_id: string;
+  account_name: string;
+  encrypted_access_token: string;
+  encrypted_refresh_token: string | null;
+  status: string;
+  last_sync_at: string | null;
+};
+
+type StripeConnectionRow = {
+  id: string;
+};
+
+type SupabaseWriteResult<T> = {
+  data: T | null;
+  error: { message: string } | null;
+};
+
+function usageEventsTable(admin: ReturnType<typeof getSupabaseAdminClient>) {
+  return admin.from("usage_events") as unknown as {
+    insert: (values: UsageEventInsert) => Promise<unknown>;
+  };
+}
+
+function stripeConnectionsTable(admin: ReturnType<typeof getSupabaseAdminClient>) {
+  return admin.from("stripe_connections") as unknown as {
+    upsert: (values: StripeConnectionUpsert, options: { onConflict: string }) => {
+      select: (columns: string) => {
+        single: () => Promise<SupabaseWriteResult<StripeConnectionRow>>;
+      };
+    };
+    update: (values: { status: string }) => {
+      eq: (column: string, value: string) => {
+        eq: (column: string, value: string) => Promise<unknown>;
+      };
+    };
+  };
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -27,14 +73,14 @@ export async function GET(req: NextRequest) {
 
       const state = crypto.randomUUID();
       const admin = getSupabaseAdminClient();
-      await admin.from("usage_events").insert({
+      await usageEventsTable(admin).insert({
         user_id: user.id, event_type: "stripe_oauth_start", metadata: { state }
       });
 
       const oauthUrl = new URL("https://connect.stripe.com/oauth/authorize");
       oauthUrl.searchParams.set("response_type", "code");
       oauthUrl.searchParams.set("client_id", clientId);
-      oauthUrl.searchParams.set("scope", "read_only");
+      oauthUrl.searchParams.set("scope", "read_write");
       oauthUrl.searchParams.set("redirect_uri", redirectUri);
       oauthUrl.searchParams.set("state", state);
       oauthUrl.searchParams.set("stripe_user[email]", user.email || "");
@@ -51,9 +97,9 @@ export async function GET(req: NextRequest) {
       const encryptedAccess = encrypt(response.access_token || "");
       const encryptedRefresh = response.refresh_token ? encrypt(response.refresh_token) : null;
       const account = await stripe.accounts.retrieve(response.stripe_user_id);
+      const stripeConnections = stripeConnectionsTable(admin);
 
-      const { data: conn, error: connErr } = await admin
-        .from("stripe_connections")
+      const { data: conn, error: connErr } = await stripeConnections
         .upsert({
           user_id: user.id,
           stripe_account_id: response.stripe_user_id,
@@ -66,8 +112,9 @@ export async function GET(req: NextRequest) {
         .select("id").single();
 
       if (connErr) return badRequest("Failed to save connection");
+      if (!conn) return badRequest("Failed to save connection");
 
-      await admin.from("usage_events").insert({
+      await usageEventsTable(admin).insert({
         user_id: user.id, event_type: "stripe_connected",
         metadata: { connection_id: conn.id, account_id: response.stripe_user_id }
       });
@@ -96,7 +143,10 @@ export async function DELETE(req: NextRequest) {
     const body = await req.json();
     if (!body.connectionId) return badRequest("connectionId required");
     const admin = getSupabaseAdminClient();
-    await admin.from("stripe_connections").update({ status: "disconnected" }).eq("id", body.connectionId).eq("user_id", user.id);
+    await stripeConnectionsTable(admin)
+      .update({ status: "disconnected" })
+      .eq("id", body.connectionId)
+      .eq("user_id", user.id);
     return NextResponse.json({ success: true });
   } catch (error) {
     return handleApiError(error, "STRIPE_DISCONNECT");

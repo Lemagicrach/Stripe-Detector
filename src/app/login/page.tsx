@@ -1,5 +1,6 @@
-﻿"use client";
-import { useState } from "react";
+"use client";
+import { Suspense, useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
 
 const supabase = createBrowserClient(
@@ -7,18 +8,80 @@ const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default function LoginPage() {
+const COOLDOWN_SECONDS = 60;
+
+/** Map raw Supabase error messages to user-friendly copy */
+function humanizeError(msg: string): { text: string; isRateLimit: boolean } {
+  const lower = msg.toLowerCase();
+  if (lower.includes("rate limit") || lower.includes("email rate limit")) {
+    return {
+      text: "Too many requests — please wait a minute then try again, or use Google to sign in instantly.",
+      isRateLimit: true,
+    };
+  }
+  if (lower.includes("after 5 seconds") || lower.includes("security purposes")) {
+    return {
+      text: "Please wait a few seconds before requesting another link.",
+      isRateLimit: false,
+    };
+  }
+  if (lower.includes("invalid email")) {
+    return { text: "That doesn't look like a valid email address.", isRateLimit: false };
+  }
+  return { text: msg, isRateLimit: false };
+}
+
+function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    searchParams.get("error") === "link_expired"
+      ? "This link has expired or already been used. Please request a new one."
+      : null
+  );
+  const [isRateLimit, setIsRateLimit] = useState(false);
+  // Cooldown countdown after a successful send
+  const [cooldown, setCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.replace("/dashboard");
+    });
+  }, [router]);
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (cooldownRef.current) clearInterval(cooldownRef.current);
+    };
+  }, []);
+
+  function startCooldown() {
+    setCooldown(COOLDOWN_SECONDS);
+    cooldownRef.current = setInterval(() => {
+      setCooldown((s) => {
+        if (s <= 1) {
+          clearInterval(cooldownRef.current!);
+          cooldownRef.current = null;
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  }
 
   // Magic link login
   async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!email.trim() || cooldown > 0) return;
     setLoading(true);
     setError(null);
+    setIsRateLimit(false);
 
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
@@ -29,9 +92,12 @@ export default function LoginPage() {
 
     setLoading(false);
     if (error) {
-      setError(error.message);
+      const { text, isRateLimit: rl } = humanizeError(error.message);
+      setError(text);
+      setIsRateLimit(rl);
     } else {
       setSent(true);
+      startCooldown();
     }
   }
 
@@ -44,73 +110,62 @@ export default function LoginPage() {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
-    if (error) setError(error.message);
+    if (error) setError(humanizeError(error.message).text);
   }
 
+  const canSubmit = !loading && !!email.trim() && cooldown === 0;
+
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "#0B1120",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: 24,
-    }}>
-      <div style={{
-        width: "100%",
-        maxWidth: 420,
-        background: "#111827",
-        border: "1px solid #1F2937",
-        borderRadius: 16,
-        padding: "2.5rem 2rem",
-      }}>
+    <div className="flex min-h-screen items-center justify-center bg-[#0B1120] p-6">
+      <div className="w-full max-w-[420px] rounded-2xl border border-gray-800 bg-gray-900 px-8 py-10">
+
         {/* Logo / Brand */}
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{
-            fontSize: "2rem",
-            fontWeight: 800,
-            fontFamily: "'Bricolage Grotesque', system-ui, sans-serif",
-            color: "#F9FAFB",
-            letterSpacing: "-0.02em",
-          }}>
+        <div className="mb-8 text-center">
+          <div className="text-[2rem] font-extrabold tracking-tight text-gray-50">
             RevPilot
           </div>
-          <p style={{
-            color: "#6B7280",
-            fontSize: "0.85rem",
-            marginTop: 6,
-          }}>
+          <p className="mt-1.5 text-sm text-gray-500">
             Revenue intelligence for bootstrapped SaaS
           </p>
         </div>
 
         {sent ? (
           /* Magic link sent confirmation */
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>Mail sent</div>
-            <h2 style={{
-              color: "#F9FAFB", fontSize: "1.2rem",
-              fontWeight: 600, marginBottom: 8,
-            }}>
+          <div className="text-center">
+            <div className="mb-4 text-5xl">✉️</div>
+            <h2 className="mb-2 text-xl font-semibold text-gray-50">
               Check your email
             </h2>
-            <p style={{
-              color: "#9CA3AF", fontSize: "0.85rem", lineHeight: 1.6,
-              marginBottom: 20,
-            }}>
-              We sent a login link to <strong style={{ color: "#F9FAFB" }}>{email}</strong>.
+            <p className="mb-3 text-sm leading-relaxed text-gray-400">
+              We sent a login link to{" "}
+              <strong className="text-gray-50">{email}</strong>.
               Click the link to sign in.
             </p>
+            <p className="mb-5 text-xs text-gray-500">
+              Don&apos;t see it? Check your spam folder.
+            </p>
+
+            {/* Resend with cooldown */}
+            <div className="mb-4">
+              {cooldown > 0 ? (
+                <p className="text-xs text-gray-500">
+                  Resend available in{" "}
+                  <span className="font-mono text-gray-400">{cooldown}s</span>
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleMagicLink as unknown as React.MouseEventHandler}
+                  className="cursor-pointer border-none bg-transparent text-xs text-blue-500 underline"
+                >
+                  Resend link
+                </button>
+              )}
+            </div>
+
             <button
-              onClick={() => { setSent(false); setEmail(""); }}
-              style={{
-                background: "transparent",
-                color: "#3B82F6",
-                border: "none",
-                fontSize: "0.85rem",
-                cursor: "pointer",
-                textDecoration: "underline",
-              }}
+              onClick={() => { setSent(false); setEmail(""); setError(null); }}
+              className="cursor-pointer border-none bg-transparent text-sm text-gray-400 underline"
             >
               Use a different email
             </button>
@@ -118,30 +173,12 @@ export default function LoginPage() {
         ) : (
           /* Login form */
           <>
-            {/* Google OAuth */}
+            {/* Google OAuth — promoted as the no-limit option */}
             <button
               onClick={handleGoogle}
-              style={{
-                width: "100%",
-                padding: "12px 16px",
-                background: "#1F2937",
-                border: "1px solid #374151",
-                borderRadius: 10,
-                color: "#F9FAFB",
-                fontSize: "0.9rem",
-                fontWeight: 500,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 10,
-                transition: "border-color 0.15s",
-                marginBottom: 20,
-              }}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = "#4B5563")}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = "#374151")}
+              className="mb-5 flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm font-medium text-gray-50 transition-colors hover:border-gray-600"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24">
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -151,21 +188,15 @@ export default function LoginPage() {
             </button>
 
             {/* Divider */}
-            <div style={{
-              display: "flex", alignItems: "center",
-              gap: 16, marginBottom: 20,
-            }}>
-              <div style={{ flex: 1, height: 1, background: "#1F2937" }} />
-              <span style={{ color: "#6B7280", fontSize: "0.75rem" }}>or</span>
-              <div style={{ flex: 1, height: 1, background: "#1F2937" }} />
+            <div className="mb-5 flex items-center gap-4">
+              <div className="h-px flex-1 bg-gray-800" />
+              <span className="text-xs text-gray-500">or</span>
+              <div className="h-px flex-1 bg-gray-800" />
             </div>
 
             {/* Email magic link */}
             <form onSubmit={handleMagicLink}>
-              <label style={{
-                display: "block", color: "#9CA3AF",
-                fontSize: "0.8rem", fontWeight: 500, marginBottom: 6,
-              }}>
+              <label className="mb-1.5 block text-xs font-medium text-gray-400">
                 Email address
               </label>
               <input
@@ -174,62 +205,58 @@ export default function LoginPage() {
                 onChange={e => setEmail(e.target.value)}
                 placeholder="you@company.com"
                 required
-                style={{
-                  width: "100%",
-                  padding: "12px 14px",
-                  background: "#0F172A",
-                  border: "1px solid #1F2937",
-                  borderRadius: 8,
-                  color: "#F9FAFB",
-                  fontSize: "0.9rem",
-                  outline: "none",
-                  marginBottom: 16,
-                  boxSizing: "border-box",
-                }}
+                className="mb-4 w-full rounded-lg border border-gray-800 bg-slate-900 px-3.5 py-3 text-sm text-gray-50 outline-none focus:border-gray-600"
               />
               <button
                 type="submit"
-                disabled={loading || !email.trim()}
-                style={{
-                  width: "100%",
-                  padding: "12px 16px",
-                  background: loading || !email.trim() ? "#1F2937" : "#3B82F6",
-                  color: loading || !email.trim() ? "#6B7280" : "#fff",
-                  border: "none",
-                  borderRadius: 10,
-                  fontSize: "0.9rem",
-                  fontWeight: 600,
-                  cursor: loading ? "wait" : "pointer",
-                  transition: "background 0.15s",
-                }}
+                disabled={!canSubmit}
+                className={`w-full rounded-xl border-none px-4 py-3 text-sm font-semibold transition-colors ${
+                  !canSubmit
+                    ? "cursor-not-allowed bg-gray-800 text-gray-500"
+                    : "cursor-pointer bg-blue-600 text-white hover:bg-blue-500"
+                }`}
               >
-                {loading ? "Sending..." : "Send Magic Link"}
+                {loading
+                  ? "Sending..."
+                  : cooldown > 0
+                  ? `Resend in ${cooldown}s`
+                  : "Send Magic Link"}
               </button>
             </form>
 
             {error && (
-              <div style={{
-                marginTop: 16,
-                padding: "10px 14px",
-                background: "rgba(239,68,68,0.1)",
-                border: "1px solid rgba(239,68,68,0.25)",
-                borderRadius: 8,
-                color: "#EF4444",
-                fontSize: "0.8rem",
-              }}>
+              <div className={`mt-4 rounded-lg border px-3.5 py-2.5 text-xs ${
+                isRateLimit
+                  ? "border-amber-500/25 bg-amber-500/10 text-amber-400"
+                  : "border-red-500/25 bg-red-500/10 text-red-400"
+              }`}>
                 {error}
+                {isRateLimit && (
+                  <button
+                    type="button"
+                    onClick={handleGoogle}
+                    className="mt-2 block w-full cursor-pointer rounded-lg border border-amber-500/30 bg-amber-500/10 py-2 text-center text-xs font-medium text-amber-300 hover:bg-amber-500/20 transition-colors"
+                  >
+                    Sign in with Google instead — no limits
+                  </button>
+                )}
               </div>
             )}
 
-            <p style={{
-              color: "#6B7280", fontSize: "0.7rem",
-              textAlign: "center", marginTop: 24, lineHeight: 1.5,
-            }}>
-              No password needed. We'll email you a secure login link.
+            <p className="mt-6 text-center text-[0.7rem] leading-relaxed text-gray-500">
+              No password needed. We&apos;ll email you a secure login link.
             </p>
           </>
         )}
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

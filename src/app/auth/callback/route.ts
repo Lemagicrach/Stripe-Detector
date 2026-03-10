@@ -30,7 +30,13 @@ export async function GET(request: NextRequest) {
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`);
     }
+
+    // Code exchange failed — send user back to login with a visible error message
+    const loginUrl = new URL(`${origin}/login`);
+    loginUrl.searchParams.set("error", "link_expired");
+    return NextResponse.redirect(loginUrl.toString());
   }
 
+  // No code param — likely a direct visit to /auth/callback
   return NextResponse.redirect(`${origin}/login`);
 }

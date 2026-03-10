@@ -8,7 +8,7 @@ create extension if not exists "uuid-ossp";
 create table public.user_profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
-  plan text not null default 'free' check (plan in ('free', 'starter', 'professional', 'business')),
+  plan text not null default 'free' check (plan in ('free', 'growth', 'business')),
   stripe_customer_id text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

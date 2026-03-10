@@ -1,4 +1,3 @@
-﻿// src/app/api/stripe/connect/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getStripeServerClient, getSupabaseAdminClient } from "@/lib/server-clients";
@@ -6,50 +5,49 @@ import { encrypt } from "@/lib/encryption";
 import { handleApiError, unauthorized, badRequest } from "@/lib/server-error";
 import { checkRateLimit } from "@/lib/rate-limit";
 
-type UsageEventInsert = {
-  user_id: string;
-  event_type: string;
-  metadata: Record<string, unknown>;
-};
-
-type StripeConnectionUpsert = {
-  user_id: string;
-  stripe_account_id: string;
-  account_name: string;
-  encrypted_access_token: string;
-  encrypted_refresh_token: string | null;
-  status: string;
-  last_sync_at: string | null;
-};
-
-type StripeConnectionRow = {
-  id: string;
-};
-
-type SupabaseWriteResult<T> = {
-  data: T | null;
-  error: { message: string } | null;
-};
-
-function usageEventsTable(admin: ReturnType<typeof getSupabaseAdminClient>) {
-  return admin.from("usage_events") as unknown as {
-    insert: (values: UsageEventInsert) => Promise<unknown>;
-  };
+function getAppUrl() {
+  return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 }
 
-function stripeConnectionsTable(admin: ReturnType<typeof getSupabaseAdminClient>) {
-  return admin.from("stripe_connections") as unknown as {
-    upsert: (values: StripeConnectionUpsert, options: { onConflict: string }) => {
-      select: (columns: string) => {
-        single: () => Promise<SupabaseWriteResult<StripeConnectionRow>>;
-      };
-    };
-    update: (values: { status: string }) => {
-      eq: (column: string, value: string) => {
-        eq: (column: string, value: string) => Promise<unknown>;
-      };
-    };
-  };
+function redirectToConnect(status: "success" | "error", params: Record<string, string>) {
+  const url = new URL("/dashboard/connect", getAppUrl());
+  url.searchParams.set("status", status);
+  Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+  return NextResponse.redirect(url.toString());
+}
+
+function fallbackEmail(userId: string) {
+  return `${userId}@placeholder.local`;
+}
+
+async function ensureUserProfile(user: { id: string; email?: string | null }) {
+  const admin = getSupabaseAdminClient();
+  const { error } = await admin.from("user_profiles").upsert(
+    {
+      id: user.id,
+      email: user.email || fallbackEmail(user.id),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "id" }
+  );
+
+  if (error) {
+    throw new Error(`Failed to ensure user profile: ${error.message}`);
+  }
+}
+
+async function trackUsageEvent(userId: string, eventType: string, metadata: Record<string, unknown>) {
+  const admin = getSupabaseAdminClient();
+  const { error } = await admin.from("usage_events").insert({
+    user_id: userId,
+    event_type: eventType,
+    metadata,
+  });
+
+  if (error) {
+    // Usage logging should never block auth/connect flow.
+    console.warn(`[STRIPE_CONNECT] usage event "${eventType}" failed:`, error.message);
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -58,24 +56,24 @@ export async function GET(req: NextRequest) {
     if (!allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 
     const supabase = await getSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return unauthorized();
 
     const url = new URL(req.url);
     const code = url.searchParams.get("code");
     const action = url.searchParams.get("action");
 
-    // Initiate OAuth
     if (action === "start") {
       const clientId = process.env.STRIPE_CLIENT_ID;
       const redirectUri = process.env.STRIPE_CONNECT_REDIRECT_URI;
       if (!clientId || !redirectUri) return badRequest("Stripe Connect not configured");
 
+      await ensureUserProfile(user);
+
       const state = crypto.randomUUID();
-      const admin = getSupabaseAdminClient();
-      await usageEventsTable(admin).insert({
-        user_id: user.id, event_type: "stripe_oauth_start", metadata: { state }
-      });
+      await trackUsageEvent(user.id, "stripe_oauth_start", { state });
 
       const oauthUrl = new URL("https://connect.stripe.com/oauth/authorize");
       oauthUrl.searchParams.set("response_type", "code");
@@ -84,49 +82,59 @@ export async function GET(req: NextRequest) {
       oauthUrl.searchParams.set("redirect_uri", redirectUri);
       oauthUrl.searchParams.set("state", state);
       oauthUrl.searchParams.set("stripe_user[email]", user.email || "");
+
       return NextResponse.json({ url: oauthUrl.toString() });
     }
 
-    // OAuth Callback
     if (code) {
       const stripe = getStripeServerClient();
-      const response = await stripe.oauth.token({ grant_type: "authorization_code", code });
-      if (!response.stripe_user_id) return badRequest("Failed to connect");
+      const oauth = await stripe.oauth.token({ grant_type: "authorization_code", code });
 
+      if (!oauth.stripe_user_id) {
+        return redirectToConnect("error", { reason: "stripe_oauth_failed" });
+      }
+
+      await ensureUserProfile(user);
+
+      const account = await stripe.accounts.retrieve(oauth.stripe_user_id);
       const admin = getSupabaseAdminClient();
-      const encryptedAccess = encrypt(response.access_token || "");
-      const encryptedRefresh = response.refresh_token ? encrypt(response.refresh_token) : null;
-      const account = await stripe.accounts.retrieve(response.stripe_user_id);
-      const stripeConnections = stripeConnectionsTable(admin);
+      const { data: conn, error: connErr } = await admin
+        .from("stripe_connections")
+        .upsert(
+          {
+            user_id: user.id,
+            stripe_account_id: oauth.stripe_user_id,
+            account_name:
+              account.business_profile?.name ||
+              account.settings?.dashboard?.display_name ||
+              account.email ||
+              "Connected Account",
+            encrypted_access_token: encrypt(oauth.access_token || ""),
+            encrypted_refresh_token: oauth.refresh_token ? encrypt(oauth.refresh_token) : null,
+            status: "active",
+            last_sync_at: null,
+          },
+          { onConflict: "user_id,stripe_account_id" }
+        )
+        .select("id")
+        .single();
 
-      const { data: conn, error: connErr } = await stripeConnections
-        .upsert({
-          user_id: user.id,
-          stripe_account_id: response.stripe_user_id,
-          account_name: account.business_profile?.name || account.settings?.dashboard?.display_name || account.email || "Connected Account",
-          encrypted_access_token: encryptedAccess,
-          encrypted_refresh_token: encryptedRefresh,
-          status: "active",
-          last_sync_at: null,
-        }, { onConflict: "user_id,stripe_account_id" })
-        .select("id").single();
+      if (connErr || !conn) {
+        const reason = connErr?.message || "save_connection_failed";
+        return redirectToConnect("error", { reason });
+      }
 
-      if (connErr) return badRequest("Failed to save connection");
-      if (!conn) return badRequest("Failed to save connection");
-
-      await usageEventsTable(admin).insert({
-        user_id: user.id, event_type: "stripe_connected",
-        metadata: { connection_id: conn.id, account_id: response.stripe_user_id }
+      await trackUsageEvent(user.id, "stripe_connected", {
+        connection_id: (conn as { id: string }).id,
+        account_id: oauth.stripe_user_id,
       });
 
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-      return NextResponse.redirect(`${appUrl}/dashboard/connect?status=success&account=${response.stripe_user_id}`);
+      return redirectToConnect("success", { account: oauth.stripe_user_id });
     }
 
     const error = url.searchParams.get("error");
     if (error) {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-      return NextResponse.redirect(`${appUrl}/dashboard/connect?status=error&reason=${error}`);
+      return redirectToConnect("error", { reason: error });
     }
 
     return badRequest("Missing code or action parameter");
@@ -138,15 +146,23 @@ export async function GET(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const supabase = await getSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return unauthorized();
+
     const body = await req.json();
     if (!body.connectionId) return badRequest("connectionId required");
+
     const admin = getSupabaseAdminClient();
-    await stripeConnectionsTable(admin)
+    const { error } = await admin
+      .from("stripe_connections")
       .update({ status: "disconnected" })
       .eq("id", body.connectionId)
       .eq("user_id", user.id);
+
+    if (error) return badRequest("Failed to disconnect");
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return handleApiError(error, "STRIPE_DISCONNECT");

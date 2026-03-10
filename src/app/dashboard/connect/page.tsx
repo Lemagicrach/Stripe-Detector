@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 
@@ -13,7 +13,7 @@ type Connection = {
   last_sync_at: string | null
 }
 
-export default function ConnectPage() {
+function ConnectPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [connections, setConnections] = useState<Connection[]>([])
@@ -283,5 +283,19 @@ export default function ConnectPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ConnectPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto w-full max-w-2xl px-4 py-8 text-sm text-gray-400">
+          Loading connection status...
+        </div>
+      }
+    >
+      <ConnectPageContent />
+    </Suspense>
   )
 }

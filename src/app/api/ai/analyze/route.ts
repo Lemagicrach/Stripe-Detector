@@ -5,6 +5,22 @@ import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { handleApiError, unauthorized, badRequest } from "@/lib/server-error";
 import { checkRateLimit } from "@/lib/rate-limit";
 
+type StripeConnection = {
+  id: string;
+};
+
+type MetricsSnapshot = {
+  mrr: number;
+  active_customers: number;
+  churn_rate: number;
+  nrr: number;
+};
+
+type RevenueLeak = {
+  title: string;
+  lost_revenue: number;
+};
+
 export async function GET() {
   try {
     const { allowed } = checkRateLimit({ key: "ai-analyze", limit: 5, windowMs: 60_000 });
@@ -18,8 +34,9 @@ export async function GET() {
     if (!apiKey) return badRequest("AI not configured");
 
     const admin = getSupabaseAdminClient();
-    const { data: connection } = await admin.from("stripe_connections").select("id")
+    const { data: connectionRaw } = await admin.from("stripe_connections").select("id")
       .eq("user_id", user.id).eq("status", "active").limit(1).single();
+    const connection = connectionRaw as unknown as StripeConnection | null;
 
     if (!connection) return NextResponse.json({ analysis: "Connect your Stripe account to get AI-powered insights." });
 
@@ -30,8 +47,8 @@ export async function GET() {
         .eq("connection_id", connection.id).eq("status", "open").order("lost_revenue", { ascending: false }).limit(5),
     ]);
 
-    const metrics = metricsRes.data?.[0];
-    const leaks = leaksRes.data || [];
+    const metrics = ((metricsRes.data as unknown as MetricsSnapshot[] | null)?.[0] ?? null);
+    const leaks = (leaksRes.data as unknown as RevenueLeak[] | null) ?? [];
 
     const prompt = `You are a SaaS revenue analyst. Given these metrics and leaks, provide a 3-4 bullet analysis of what's working, what's broken, and the #1 action to take.
 

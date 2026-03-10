@@ -1,0 +1,200 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F1D3A"/>
+      <stop offset="1" stop-color="#0B1120"/>
+    </linearGradient>
+    <linearGradient id="chartLine" x1="620" y1="460" x2="1160" y2="200" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#93C5FD"/>
+    </linearGradient>
+    <linearGradient id="chartArea" x1="890" y1="200" x2="890" y2="470" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3B82F6" stop-opacity="0.15"/>
+      <stop offset="1" stop-color="#3B82F6" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="cardBg" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop stop-color="#1E293B"/>
+      <stop offset="1" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="logoBg" x1="0" y1="0" x2="1" y2="1" gradientUnits="objectBoundingBox">
+      <stop stop-color="#1D3A6B"/>
+      <stop offset="1" stop-color="#0B1120"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="cardShadow" x="-5%" y="-5%" width="110%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="12" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+    <clipPath id="cardClip1"><rect x="620" y="80" width="245" height="130" rx="14"/></clipPath>
+    <clipPath id="cardClip2"><rect x="880" y="80" width="245" height="130" rx="14"/></clipPath>
+    <clipPath id="cardClip3"><rect x="620" y="228" width="245" height="130" rx="14"/></clipPath>
+    <clipPath id="cardClip4"><rect x="880" y="228" width="245" height="130" rx="14"/></clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Subtle dot grid -->
+  <g fill="#1E3A8A" opacity="0.18">
+    <!-- rows of dots -->
+    <circle cx="40" cy="40" r="1.5"/><circle cx="120" cy="40" r="1.5"/><circle cx="200" cy="40" r="1.5"/><circle cx="280" cy="40" r="1.5"/><circle cx="360" cy="40" r="1.5"/><circle cx="440" cy="40" r="1.5"/><circle cx="520" cy="40" r="1.5"/>
+    <circle cx="40" cy="120" r="1.5"/><circle cx="120" cy="120" r="1.5"/><circle cx="200" cy="120" r="1.5"/><circle cx="280" cy="120" r="1.5"/><circle cx="360" cy="120" r="1.5"/><circle cx="440" cy="120" r="1.5"/><circle cx="520" cy="120" r="1.5"/>
+    <circle cx="40" cy="200" r="1.5"/><circle cx="120" cy="200" r="1.5"/><circle cx="200" cy="200" r="1.5"/><circle cx="280" cy="200" r="1.5"/><circle cx="360" cy="200" r="1.5"/><circle cx="440" cy="200" r="1.5"/><circle cx="520" cy="200" r="1.5"/>
+    <circle cx="40" cy="280" r="1.5"/><circle cx="120" cy="280" r="1.5"/><circle cx="200" cy="280" r="1.5"/><circle cx="280" cy="280" r="1.5"/><circle cx="360" cy="280" r="1.5"/><circle cx="440" cy="280" r="1.5"/><circle cx="520" cy="280" r="1.5"/>
+    <circle cx="40" cy="360" r="1.5"/><circle cx="120" cy="360" r="1.5"/><circle cx="200" cy="360" r="1.5"/><circle cx="280" cy="360" r="1.5"/><circle cx="360" cy="360" r="1.5"/><circle cx="440" cy="360" r="1.5"/><circle cx="520" cy="360" r="1.5"/>
+    <circle cx="40" cy="440" r="1.5"/><circle cx="120" cy="440" r="1.5"/><circle cx="200" cy="440" r="1.5"/><circle cx="280" cy="440" r="1.5"/><circle cx="360" cy="440" r="1.5"/><circle cx="440" cy="440" r="1.5"/><circle cx="520" cy="440" r="1.5"/>
+    <circle cx="40" cy="520" r="1.5"/><circle cx="120" cy="520" r="1.5"/><circle cx="200" cy="520" r="1.5"/><circle cx="280" cy="520" r="1.5"/><circle cx="360" cy="520" r="1.5"/><circle cx="440" cy="520" r="1.5"/><circle cx="520" cy="520" r="1.5"/>
+    <circle cx="40" cy="600" r="1.5"/><circle cx="120" cy="600" r="1.5"/><circle cx="200" cy="600" r="1.5"/><circle cx="280" cy="600" r="1.5"/><circle cx="360" cy="600" r="1.5"/><circle cx="440" cy="600" r="1.5"/><circle cx="520" cy="600" r="1.5"/>
+  </g>
+
+  <!-- Vertical divider -->
+  <line x1="580" y1="60" x2="580" y2="570" stroke="#1E3A8A" stroke-width="1" stroke-opacity="0.5"/>
+
+  <!-- ===== LEFT: Branding ===== -->
+
+  <!-- Logo mark -->
+  <rect x="60" y="80" width="72" height="72" rx="16" fill="url(#logoBg)"/>
+  <!-- Mini chart in logo -->
+  <polyline points="74,136 84,124 94,128 104,112 114,106 124,96"
+    stroke="#3B82F6" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Leak dot in logo -->
+  <circle cx="94" cy="128" r="5" fill="#EF4444"/>
+  <!-- Pilot needle -->
+  <line x1="96" y1="116" x2="118" y2="100" stroke="#60A5FA" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+  <circle cx="96" cy="116" r="2.5" fill="#3B82F6"/>
+
+  <!-- RevPilot wordmark -->
+  <text x="152" y="124"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="42" font-weight="800" fill="white" letter-spacing="-1">RevPilot</text>
+
+  <!-- Blue underline accent -->
+  <rect x="60" y="168" width="280" height="3" rx="2" fill="#3B82F6" opacity="0.7"/>
+
+  <!-- Tagline -->
+  <text x="60" y="228"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="22" font-weight="400" fill="#94A3B8">Revenue Intelligence for</text>
+  <text x="60" y="262"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="22" font-weight="400" fill="#94A3B8">Bootstrapped SaaS Founders</text>
+
+  <!-- Feature pills -->
+  <g>
+    <!-- Pill 1 -->
+    <rect x="60" y="310" width="148" height="36" rx="18" fill="#1E3A8A" fill-opacity="0.5" stroke="#2563EB" stroke-width="1"/>
+    <circle cx="82" cy="328" r="5" fill="#EF4444"/>
+    <text x="95" y="333"
+      font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+      font-size="14" fill="#93C5FD">Leak Detection</text>
+    <!-- Pill 2 -->
+    <rect x="220" y="310" width="136" height="36" rx="18" fill="#1E3A8A" fill-opacity="0.5" stroke="#2563EB" stroke-width="1"/>
+    <circle cx="240" cy="328" r="5" fill="#10B981"/>
+    <text x="253" y="333"
+      font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+      font-size="14" fill="#93C5FD">MRR Tracking</text>
+    <!-- Pill 3 -->
+    <rect x="60" y="360" width="114" height="36" rx="18" fill="#1E3A8A" fill-opacity="0.5" stroke="#2563EB" stroke-width="1"/>
+    <circle cx="80" cy="378" r="5" fill="#F59E0B"/>
+    <text x="93" y="383"
+      font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+      font-size="14" fill="#93C5FD">Churn Analysis</text>
+    <!-- Pill 4 -->
+    <rect x="186" y="360" width="128" height="36" rx="18" fill="#1E3A8A" fill-opacity="0.5" stroke="#2563EB" stroke-width="1"/>
+    <circle cx="206" cy="378" r="5" fill="#A78BFA"/>
+    <text x="219" y="383"
+      font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+      font-size="14" fill="#93C5FD">AI Copilot</text>
+  </g>
+
+  <!-- Bottom CTA line -->
+  <text x="60" y="490"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="16" fill="#475569">Powered by Stripe · Built with Anthropic Claude</text>
+
+  <!-- ===== RIGHT: Dashboard Preview ===== -->
+
+  <!-- Metric card 1 — MRR -->
+  <rect x="620" y="80" width="245" height="130" rx="14" fill="#111827" stroke="#1E293B" stroke-width="1" filter="url(#cardShadow)"/>
+  <text x="640" y="112"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="13" fill="#6B7280">Monthly Recurring Revenue</text>
+  <text x="640" y="155"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="34" font-weight="700" fill="white">$24,180</text>
+  <text x="640" y="185"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="13" fill="#10B981">↑ 8.4% vs last month</text>
+
+  <!-- Metric card 2 — Leaks -->
+  <rect x="880" y="80" width="245" height="130" rx="14" fill="#111827" stroke="#1E293B" stroke-width="1" filter="url(#cardShadow)"/>
+  <text x="900" y="112"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="13" fill="#6B7280">Recoverable Revenue</text>
+  <text x="900" y="155"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="34" font-weight="700" fill="#F87171">$3,420</text>
+  <text x="900" y="185"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="13" fill="#94A3B8">4 active leaks detected</text>
+
+  <!-- Metric card 3 — Churn -->
+  <rect x="620" y="228" width="245" height="130" rx="14" fill="#111827" stroke="#1E293B" stroke-width="1" filter="url(#cardShadow)"/>
+  <text x="640" y="260"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="13" fill="#6B7280">Churn Rate</text>
+  <text x="640" y="303"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="34" font-weight="700" fill="white">2.1%</text>
+  <text x="640" y="333"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="13" fill="#10B981">↓ 0.3% vs last month</text>
+
+  <!-- Metric card 4 — NRR -->
+  <rect x="880" y="228" width="245" height="130" rx="14" fill="#111827" stroke="#1E293B" stroke-width="1" filter="url(#cardShadow)"/>
+  <text x="900" y="260"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="13" fill="#6B7280">Net Revenue Retention</text>
+  <text x="900" y="303"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="34" font-weight="700" fill="white">107%</text>
+  <text x="900" y="333"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="13" fill="#10B981">Healthy expansion revenue</text>
+
+  <!-- Chart card -->
+  <rect x="620" y="376" width="505" height="180" rx="14" fill="#111827" stroke="#1E293B" stroke-width="1" filter="url(#cardShadow)"/>
+  <text x="640" y="406"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="13" fill="#6B7280">MRR Trend · Last 30 days</text>
+
+  <!-- Chart grid lines -->
+  <g stroke="#1E293B" stroke-width="1">
+    <line x1="640" y1="420" x2="1105" y2="420"/>
+    <line x1="640" y1="450" x2="1105" y2="450"/>
+    <line x1="640" y1="480" x2="1105" y2="480"/>
+    <line x1="640" y1="510" x2="1105" y2="510"/>
+  </g>
+
+  <!-- Chart area fill -->
+  <polygon
+    points="640,505 690,490 740,492 800,472 860,460 920,442 980,430 1040,415 1100,400 1100,530 640,530"
+    fill="url(#chartArea)"/>
+
+  <!-- Chart line -->
+  <polyline
+    points="640,505 690,490 740,492 800,472 860,460 920,442 980,430 1040,415 1100,400"
+    stroke="url(#chartLine)" stroke-width="3"
+    stroke-linecap="round" stroke-linejoin="round"
+    filter="url(#glow)"/>
+
+  <!-- Leak blip on chart -->
+  <circle cx="740" cy="492" r="7" fill="#EF4444" filter="url(#glow)"/>
+  <circle cx="740" cy="492" r="13" fill="none" stroke="#EF4444" stroke-width="1.5" opacity="0.4"/>
+
+  <!-- Latest point highlight -->
+  <circle cx="1100" cy="400" r="6" fill="#10B981"/>
+  <circle cx="1100" cy="400" r="12" fill="none" stroke="#10B981" stroke-width="1.5" opacity="0.4"/>
+</svg>

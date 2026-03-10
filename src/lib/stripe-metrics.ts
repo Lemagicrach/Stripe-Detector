@@ -19,7 +19,7 @@ export async function syncStripeMetrics(
   stripeAccountId: string, encryptedAccessToken: string
 ): Promise<SyncResult> {
   const accessToken = decrypt(encryptedAccessToken);
-  const stripe = new Stripe(accessToken, { apiVersion: "2024-12-18.acacia" });
+  const stripe = new Stripe(accessToken, { apiVersion: "2026-02-25.clover" });
 
   // Fetch all subscriptions
   const subscriptions: Stripe.Subscription[] = [];
@@ -56,8 +56,8 @@ export async function syncStripeMetrics(
       customerEmail: customer.email || "unknown", status: sub.status,
       mrr: subMrr,
       planName: sub.items.data[0]?.price?.nickname || sub.items.data[0]?.price?.id || "unknown",
-      currentPeriodEnd: sub.current_period_end,
-      cancelAtPeriodEnd: sub.cancel_at_period_end, created: sub.created,
+      currentPeriodEnd: (sub as any).current_period_end ?? sub.created,
+      cancelAtPeriodEnd: Boolean((sub as any).cancel_at_period_end), created: sub.created,
     });
   }
 
@@ -105,7 +105,7 @@ function calculateSubscriptionMrr(sub: Stripe.Subscription): number {
 }
 
 export async function getFailedInvoices(encryptedAccessToken: string, since: number): Promise<Stripe.Invoice[]> {
-  const stripe = new Stripe(decrypt(encryptedAccessToken), { apiVersion: "2024-12-18.acacia" });
+  const stripe = new Stripe(decrypt(encryptedAccessToken), { apiVersion: "2026-02-25.clover" });
   const invoices: Stripe.Invoice[] = [];
   let hasMore = true;
   let startingAfter: string | undefined;
@@ -114,7 +114,11 @@ export async function getFailedInvoices(encryptedAccessToken: string, since: num
       limit: 100, status: "open", created: { gte: since }, expand: ["data.customer"],
       ...(startingAfter ? { starting_after: startingAfter } : {}),
     });
-    invoices.push(...batch.data.filter(inv => inv.attempted && !inv.paid));
+    invoices.push(
+      ...batch.data.filter(
+        (inv) => Boolean((inv as any).attempted) && (inv as any).status !== "paid"
+      )
+    );
     hasMore = batch.has_more;
     if (batch.data.length > 0) startingAfter = batch.data[batch.data.length - 1].id;
   }
@@ -122,7 +126,7 @@ export async function getFailedInvoices(encryptedAccessToken: string, since: num
 }
 
 export async function getExpiringCards(encryptedAccessToken: string) {
-  const stripe = new Stripe(decrypt(encryptedAccessToken), { apiVersion: "2024-12-18.acacia" });
+  const stripe = new Stripe(decrypt(encryptedAccessToken), { apiVersion: "2026-02-25.clover" });
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();

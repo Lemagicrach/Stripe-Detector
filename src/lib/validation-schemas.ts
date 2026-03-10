@@ -16,7 +16,7 @@ export const runScanSchema = z.object({
 export const createScenarioSchema = z.object({
   name: z.string().min(1).max(100),
   type: z.enum(["churn_reduction", "price_increase", "expansion", "recovery"]),
-  parameters: z.record(z.unknown()),
+  parameters: z.record(z.string(), z.unknown()),
 });
 
 // AI Copilot
@@ -32,5 +32,5 @@ export const copilotMessageSchema = z.object({
 export const churnInterventionSchema = z.object({
   customerId: z.string().min(1),
   type: z.enum(["discount", "outreach", "feature_highlight", "survey"]),
-  params: z.record(z.unknown()).optional(),
+  params: z.record(z.string(), z.unknown()).optional(),
 });

@@ -63,7 +63,7 @@ export interface RecoveryEvent {
 }
 
 // â”€â”€ User / Connection Types â”€â”€
-export type PlanTier = "free" | "starter" | "professional" | "business";
+export type PlanTier = "free" | "growth" | "business"; // synced with PLAN_LIMITS in lib/stripe.ts
 
 export interface UserProfile {
   id: string;

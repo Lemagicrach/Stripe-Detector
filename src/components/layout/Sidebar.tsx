@@ -4,11 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Search, BarChart3, AlertTriangle, TrendingUp,
-  Settings, CreditCard, Plug, Bell, GitCompare, Zap,
+  Settings, CreditCard, Plug, Bell, GitCompare, Zap, Sparkles,
 } from "lucide-react";
 import { clsx } from "clsx";
 
 const navItems = [
+  { href: "/dashboard/copilot", label: "AI Copilot", icon: Sparkles },
   { href: "/dashboard/leaks", label: "Leak Scanner", icon: Search },
   { href: "/dashboard/metrics", label: "Metrics", icon: BarChart3 },
   { href: "/dashboard/churn", label: "Churn", icon: AlertTriangle },

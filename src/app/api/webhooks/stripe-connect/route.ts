@@ -1,11 +1,10 @@
 // src/app/api/webhooks/stripe-connect/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseAdminClient } from "@/lib/server-clients";
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", { apiVersion: "2026-02-25.clover" });
+import { getSupabaseAdminClient, getStripeServerClient } from "@/lib/server-clients";
+import type Stripe from "stripe";
 
 export async function POST(req: NextRequest) {
+  const stripe = getStripeServerClient();
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
   if (!sig) return NextResponse.json({ error: "No signature" }, { status: 400 });

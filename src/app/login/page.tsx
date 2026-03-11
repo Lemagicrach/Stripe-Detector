@@ -1,12 +1,7 @@
 "use client";
-import { Suspense, useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect, useRef, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
-
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 const COOLDOWN_SECONDS = 60;
 
@@ -32,6 +27,10 @@ function humanizeError(msg: string): { text: string; isRateLimit: boolean } {
 }
 
 function LoginForm() {
+  const supabase = useMemo(() => createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  ), []);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");

@@ -34,6 +34,8 @@ function LoginForm() {
   ), []);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/dashboard";
+
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -43,18 +45,16 @@ function LoginForm() {
       : null
   );
   const [isRateLimit, setIsRateLimit] = useState(false);
-  // Cooldown countdown after a successful send
   const [cooldown, setCooldown] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Redirect to dashboard if already authenticated
+  // Redirect to destination if already authenticated
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) router.replace("/dashboard");
+      if (session) router.replace(next);
     });
-  }, [router]);
+  }, [router, next]);
 
-  // Cleanup interval on unmount
   useEffect(() => {
     return () => {
       if (cooldownRef.current) clearInterval(cooldownRef.current);
@@ -75,7 +75,7 @@ function LoginForm() {
     }, 1000);
   }
 
-  // Magic link login
+  // Magic link — embed `next` in the callback URL so the server can redirect there
   async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault();
     if (!email.trim() || cooldown > 0) return;
@@ -83,11 +83,11 @@ function LoginForm() {
     setError(null);
     setIsRateLimit(false);
 
+    const callbackUrl = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { emailRedirectTo: callbackUrl },
     });
 
     setLoading(false);
@@ -101,14 +101,13 @@ function LoginForm() {
     }
   }
 
-  // Google OAuth login
+  // Google OAuth — same `next` forwarding
   async function handleGoogle() {
     setError(null);
+    const callbackUrl = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { redirectTo: callbackUrl },
     });
     if (error) setError(humanizeError(error.message).text);
   }
@@ -139,7 +138,7 @@ function LoginForm() {
             <p className="mb-3 text-sm leading-relaxed text-gray-400">
               We sent a login link to{" "}
               <strong className="text-gray-50">{email}</strong>.
-              Click the link to sign in.
+              Click the link to sign in — from any device.
             </p>
             <p className="mb-5 text-xs text-gray-500">
               Don&apos;t see it? Check your spam folder.
@@ -173,7 +172,7 @@ function LoginForm() {
         ) : (
           /* Login form */
           <>
-            {/* Google OAuth — promoted as the no-limit option */}
+            {/* Google OAuth */}
             <button
               onClick={handleGoogle}
               className="mb-5 flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm font-medium text-gray-50 transition-colors hover:border-gray-600"

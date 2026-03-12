@@ -31,17 +31,21 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Redirect unauthenticated users away from protected routes
+  // Redirect unauthenticated users away from protected routes,
+  // preserving where they were trying to go so we can send them there after login.
   if (!user && pathname.startsWith("/dashboard")) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from /login (breaks the loop)
+  // Redirect authenticated users away from /login to their intended destination
   if (user && pathname === "/login") {
+    const next = request.nextUrl.searchParams.get("next") || "/dashboard";
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = next;
+    url.searchParams.delete("next");
     return NextResponse.redirect(url);
   }
 

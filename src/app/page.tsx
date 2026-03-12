@@ -152,7 +152,7 @@ const plans = [
     subNote: "Up to $100K MRR",
     features: ["Continuous leak monitoring", "Real-time churn alerts", "50 AI queries/month", "1-year data retention", "Email support"],
     cta: "Start 14-day trial →",
-    href: "/dashboard/connect",
+    href: "/login",
     featured: true,
   },
   {
@@ -163,7 +163,7 @@ const plans = [
     subNote: "Up to $500K MRR",
     features: ["Everything in Growth", "200 AI queries/month", "Custom leak reports", "Unlimited retention", "Priority support"],
     cta: "Start 14-day trial",
-    href: "/dashboard/connect",
+    href: "/login",
     featured: false,
   },
 ];
@@ -234,7 +234,7 @@ export default function LandingPage() {
             Sign in
           </Link>
           <Link
-            href="/dashboard/connect"
+            href="/login"
             className="rounded-lg bg-[#E8442A] px-4 py-2 text-sm font-semibold text-white transition-all hover:brightness-110 hover:-translate-y-px"
           >
             Connect Stripe

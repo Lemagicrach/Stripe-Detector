@@ -55,6 +55,25 @@ function LoginForm() {
     });
   }, [router, next]);
 
+  // Parse hash-fragment errors from Supabase (e.g. expired OTP, access_denied)
+  // Supabase delivers these as /login#error=...&error_code=...&error_description=...
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    const params = new URLSearchParams(hash);
+    const errorCode = params.get("error_code");
+    const description = params.get("error_description")?.replace(/\+/g, " ");
+    if (errorCode) {
+      if (errorCode === "otp_expired" || errorCode === "access_denied") {
+        setError("This login link has expired or already been used. Please request a new one.");
+      } else {
+        setError(description || "Authentication failed. Please try again.");
+      }
+      // Clean the hash from the URL so refresh doesn't re-show it
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+  }, []);
+
   useEffect(() => {
     return () => {
       if (cooldownRef.current) clearInterval(cooldownRef.current);

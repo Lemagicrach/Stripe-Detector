@@ -66,7 +66,7 @@ src/
 ├── types/
 │   ├── database.ts        # Supabase generated types
 │   └── index.ts           # Shared TypeScript types
-└── middleware.ts           # Auth guard via updateSession()
+└── proxy.ts                # Auth guard via updateSession() (Next.js 16 middleware convention)
 ```
 
 ---
@@ -75,7 +75,7 @@ src/
 
 ### Authentication
 - **Supabase Auth** with Google OAuth (primary) and email magic links (backup)
-- Middleware at `src/middleware.ts` calls `updateSession()` from `src/lib/supabase/middleware.ts`
+- Middleware at `src/proxy.ts` calls `updateSession()` from `src/lib/supabase/middleware.ts` (Next.js 16 uses `proxy.ts`, not `middleware.ts`)
 - Public routes: `/`, `/login`, `/auth/callback`, `/api/webhooks/*`, `/api/cron/*`, `/api/health`
 - All `/dashboard/*` routes require authentication
 - Auth callback at `src/app/auth/callback/route.ts` exchanges code → redirects to `/dashboard`
@@ -239,7 +239,7 @@ npm run lint         # ESLint check
 - **Never call Supabase admin client from client components** — it bypasses RLS
 - **Never store unencrypted Stripe tokens** — always use `encrypt()` from `src/lib/encryption.ts`
 - **Never put auth logic in `dashboard/layout.tsx`** — middleware handles it
-- **Never create `middleware.ts` in `src/lib/`** — Next.js only reads from `src/middleware.ts`
+- **Never create `middleware.ts` at `src/middleware.ts`** — Next.js 16 uses `src/proxy.ts` as the middleware file; creating both causes a build error
 - **Never use `localStorage`** in components — use React state or server-side sessions
 - **Never hardcode Stripe API versions** — use the SDK default
 - **Never skip error handling** in API routes — always wrap in try/catch with `handleApiError()`
@@ -259,8 +259,7 @@ npm run lint         # ESLint check
 
 ### Known Issues
 - `src/app/api/ai/analyze/route.ts` line 27: TypeScript error (`Property 'id' does not exist on type 'never'`) — needs type annotation on Supabase query
-- Magic link login has PKCE issue when opened in different browser context — low priority, Google OAuth is primary
-- `src/proxy.ts` is dead code (leftover) — safe to delete
+- Magic link cross-device: auth callback handles token_hash flow; requires Supabase email template to use {{ .TokenHash }} (see auth/callback/route.ts)
 
 ### Next Up
 - Complete Stripe data sync after Connect

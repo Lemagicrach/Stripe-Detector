@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { PLAN_LIMITS, type PlanTier } from "@/lib/stripe";
 import { CheckCircle2, Zap, ArrowRight, ExternalLink, AlertTriangle } from "lucide-react";
@@ -41,10 +41,10 @@ export default function BillingPage() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createBrowserClient(
+  const supabase = useMemo(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  ), []);
 
   useEffect(() => {
     async function loadUsage() {
@@ -87,18 +87,26 @@ export default function BillingPage() {
   async function startCheckout(plan: PlanTier) {
     setCheckoutLoading(plan);
     setError(null);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15_000);
     try {
       const res = await fetch("/api/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan }),
+        signal: controller.signal,
       });
       const data = await res.json() as { url?: string; error?: string };
       if (!res.ok || !data.url) throw new Error(data.error ?? "Failed to create checkout");
       window.location.href = data.url;
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Checkout failed");
+      const msg = e instanceof Error && e.name === "AbortError"
+        ? "Request timed out. Please try again."
+        : e instanceof Error ? e.message : "Checkout failed";
+      setError(msg);
       setCheckoutLoading(null);
+    } finally {
+      clearTimeout(timeout);
     }
   }
 

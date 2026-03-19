@@ -1,4 +1,6 @@
+"use client";
 import Link from "next/link";
+import { useState } from "react";
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 
@@ -140,8 +142,8 @@ const plans = [
     note: "/mo",
     subNote: "Under $10K MRR",
     features: ["Full leak scan", "MRR, churn, revenue tracking", "5 AI queries/month", "30-day data retention"],
-    cta: "Scan for free →",
-    href: "/demo",
+    cta: "Start for free →",
+    href: "/login",
     featured: false,
   },
   {
@@ -206,6 +208,8 @@ function VsCell({ value }: { value: boolean | string }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
     <main className="relative min-h-screen overflow-x-clip bg-[#0B0E11] text-[#E8ECF1]">
       {/* Background orbs */}
@@ -215,31 +219,82 @@ export default function LandingPage() {
       </div>
 
       {/* ── NAV ── */}
-      <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-[#1E2530] bg-[#0B0E11]/85 px-6 py-4 backdrop-blur-xl">
-        <Link href="/" className="flex items-center gap-2 text-[17px] font-bold tracking-tight text-[#E8ECF1]">
-          <span className="h-2 w-2 rounded-full bg-[#E8442A]" />
-          RevPilot
-        </Link>
-        <div className="hidden items-center gap-8 sm:flex">
-          <a href="#how"     className="text-sm font-medium text-[#8B95A5] transition-colors hover:text-[#E8ECF1]">How it works</a>
-          <a href="#leaks"   className="text-sm font-medium text-[#8B95A5] transition-colors hover:text-[#E8ECF1]">What we find</a>
-          <a href="#pricing" className="text-sm font-medium text-[#8B95A5] transition-colors hover:text-[#E8ECF1]">Pricing</a>
-          <a href="#faq"     className="text-sm font-medium text-[#8B95A5] transition-colors hover:text-[#E8ECF1]">FAQ</a>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="rounded-lg border border-[#1E2530] px-4 py-2 text-sm font-medium text-[#8B95A5] transition-colors hover:border-[#2A3444] hover:text-[#E8ECF1]"
-          >
-            Sign in
+      <nav className="sticky top-0 z-50 border-b border-[#1E2530] bg-[#0B0E11]/85 backdrop-blur-xl">
+        <div className="flex items-center justify-between px-6 py-4">
+          <Link href="/" className="flex items-center gap-2 text-[17px] font-bold tracking-tight text-[#E8ECF1]">
+            <span className="h-2 w-2 rounded-full bg-[#E8442A]" />
+            RevPilot
           </Link>
-          <Link
-            href="/login"
-            className="rounded-lg bg-[#E8442A] px-4 py-2 text-sm font-semibold text-white transition-all hover:brightness-110 hover:-translate-y-px"
-          >
-            Connect Stripe
-          </Link>
+
+          {/* Desktop links */}
+          <div className="hidden items-center gap-8 sm:flex">
+            <a href="#how"     className="text-sm font-medium text-[#8B95A5] transition-colors hover:text-[#E8ECF1]">How it works</a>
+            <a href="#leaks"   className="text-sm font-medium text-[#8B95A5] transition-colors hover:text-[#E8ECF1]">What we find</a>
+            <a href="#pricing" className="text-sm font-medium text-[#8B95A5] transition-colors hover:text-[#E8ECF1]">Pricing</a>
+            <a href="#faq"     className="text-sm font-medium text-[#8B95A5] transition-colors hover:text-[#E8ECF1]">FAQ</a>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Desktop CTAs */}
+            <Link
+              href="/login"
+              className="hidden rounded-lg border border-[#1E2530] px-4 py-2 text-sm font-medium text-[#8B95A5] transition-colors hover:border-[#2A3444] hover:text-[#E8ECF1] sm:inline-flex"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/login"
+              className="hidden rounded-lg bg-[#E8442A] px-4 py-2 text-sm font-semibold text-white transition-all hover:brightness-110 hover:-translate-y-px sm:inline-flex"
+            >
+              Get started free
+            </Link>
+
+            {/* Mobile hamburger */}
+            <button
+              type="button"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#1E2530] text-[#8B95A5] sm:hidden"
+              aria-label="Toggle menu"
+            >
+              {mobileOpen ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+              )}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile menu */}
+        {mobileOpen && (
+          <div className="border-t border-[#1E2530] px-6 pb-5 pt-4 sm:hidden">
+            <div className="flex flex-col gap-1">
+              {[
+                { href: "#how",     label: "How it works" },
+                { href: "#leaks",   label: "What we find" },
+                { href: "#pricing", label: "Pricing" },
+                { href: "#faq",     label: "FAQ" },
+              ].map(({ href, label }) => (
+                <a
+                  key={href}
+                  href={href}
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-lg px-3 py-2.5 text-sm font-medium text-[#8B95A5] transition-colors hover:bg-[#12161B] hover:text-[#E8ECF1]"
+                >
+                  {label}
+                </a>
+              ))}
+              <div className="mt-3 flex flex-col gap-2 border-t border-[#1E2530] pt-3">
+                <Link href="/login" onClick={() => setMobileOpen(false)} className="rounded-lg border border-[#1E2530] px-4 py-2.5 text-center text-sm font-medium text-[#8B95A5]">
+                  Sign in
+                </Link>
+                <Link href="/login" onClick={() => setMobileOpen(false)} className="rounded-lg bg-[#E8442A] px-4 py-2.5 text-center text-sm font-semibold text-white">
+                  Get started free
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* ── HERO ── */}

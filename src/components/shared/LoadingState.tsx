@@ -1,8 +1,10 @@
-﻿export function LoadingState({ rows = 3 }: { rows?: number }) {
+import { Skeleton } from "@/components/ui/skeleton";
+
+export function LoadingState({ rows = 3 }: { rows?: number }) {
   return (
-    <div className="space-y-4 animate-pulse">
+    <div className="space-y-4">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="rounded-xl bg-gray-800/50 h-20" />
+        <Skeleton key={i} className="h-20 w-full rounded-xl" />
       ))}
     </div>
   );

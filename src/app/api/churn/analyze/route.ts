@@ -47,7 +47,7 @@ export async function GET() {
       .from("revenue_leaks")
       .select("id, type, severity, revenue_impact, recovery_probability, title, description, created_at")
       .eq("connection_id", connection.id)
-      .in("type", ["pending_cancel", "zombie_sub"])
+      .in("category", ["pending_cancel", "zombie_sub"])
       .eq("status", "open")
       .order("revenue_impact", { ascending: false })
       .limit(50);

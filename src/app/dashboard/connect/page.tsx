@@ -113,7 +113,7 @@ function ConnectPageContent() {
       <div>
         <h1 className="text-2xl font-bold text-white">Connect Stripe</h1>
         <p className="mt-1 text-sm text-gray-400">
-          Link your Stripe account so RevPilot can scan for revenue leaks.
+          Link your Stripe account so Corvidet can scan for revenue leaks.
         </p>
       </div>
 
@@ -209,7 +209,7 @@ function ConnectPageContent() {
             Connect your Stripe account
           </h2>
           <p className="mx-auto mb-6 max-w-md text-sm leading-relaxed text-gray-400">
-            RevPilot uses read-only OAuth access to analyze your subscriptions,
+            Corvidet uses read-only OAuth access to analyze your subscriptions,
             detect failed payments, expiring cards, and churn risks — then shows
             you exactly how to recover the revenue.
           </p>
@@ -257,12 +257,12 @@ function ConnectPageContent() {
             {
               step: '1',
               title: 'Authorize read-only access',
-              desc: 'You\'ll be redirected to Stripe to grant RevPilot read-only access. We never modify your billing data.',
+              desc: 'You\'ll be redirected to Stripe to grant Corvidet read-only access. We never modify your billing data.',
             },
             {
               step: '2',
               title: 'Automatic sync',
-              desc: 'RevPilot pulls your subscriptions, invoices, and payment history. First sync takes under a minute.',
+              desc: 'Corvidet pulls your subscriptions, invoices, and payment history. First sync takes under a minute.',
             },
             {
               step: '3',

@@ -177,7 +177,7 @@ const faqs = [
   },
   {
     q: "How is this different from Stripe's dashboard?",
-    a: "Stripe shows you what happened. RevPilot shows you what's going wrong — silently. We surface the patterns, anomalies, and broken flows that don't show up in a revenue chart.",
+    a: "Stripe shows you what happened. Corvidet shows you what's going wrong — silently. We surface the patterns, anomalies, and broken flows that don't show up in a revenue chart.",
   },
   {
     q: "Is my Stripe data safe?",
@@ -185,7 +185,7 @@ const faqs = [
   },
   {
     q: "I'm already using ChartMogul / Baremetrics",
-    a: "RevPilot doesn't replace your analytics dashboard — it complements it. Those tools show metrics. We find the problems hiding inside those metrics. Many users run both.",
+    a: "Corvidet doesn't replace your analytics dashboard — it complements it. Those tools show metrics. We find the problems hiding inside those metrics. Many users run both.",
   },
   {
     q: "How fast does it work?",
@@ -223,7 +223,7 @@ export default function LandingPage() {
         <div className="flex items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2 text-[17px] font-bold tracking-tight text-[#E8ECF1]">
             <span className="h-2 w-2 rounded-full bg-[#E8442A]" />
-            RevPilot
+            Corvidet
           </Link>
 
           {/* Desktop links */}
@@ -316,7 +316,7 @@ export default function LandingPage() {
           >
             leaking revenue.
           </span>
-          <br />RevPilot finds it.
+          <br />Corvidet finds it.
         </h1>
 
         <p className="fade-up delay-2 mx-auto mt-5 max-w-[560px] text-[17px] leading-relaxed text-[#8B95A5]">
@@ -428,7 +428,7 @@ export default function LandingPage() {
       <section id="leaks" className="mx-auto max-w-5xl px-6 py-20">
         <div className="mb-12 text-center">
           <h2 className="text-[clamp(26px,3.5vw,38px)] font-bold tracking-[-0.02em]">
-            What RevPilot catches that Stripe doesn&apos;t show you
+            What Corvidet catches that Stripe doesn&apos;t show you
           </h2>
         </div>
         <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
@@ -449,7 +449,7 @@ export default function LandingPage() {
       {/* ── COMPARISON TABLE ── */}
       <section className="mx-auto max-w-[700px] px-6 py-20">
         <div className="mb-12 text-center">
-          <h2 className="text-[clamp(26px,3.5vw,38px)] font-bold tracking-[-0.02em]">RevPilot vs. the alternatives</h2>
+          <h2 className="text-[clamp(26px,3.5vw,38px)] font-bold tracking-[-0.02em]">Corvidet vs. the alternatives</h2>
           <p className="mt-3 text-[#8B95A5]">Others show you dashboards. We show you what&apos;s broken.</p>
         </div>
         <div className="overflow-hidden rounded-xl border border-[#1E2530]">
@@ -459,7 +459,7 @@ export default function LandingPage() {
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-[0.06em] text-[#5A6575]">
                   <span className="sr-only">Feature</span>
                 </th>
-                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-[0.06em] text-[#E8442A]">RevPilot</th>
+                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-[0.06em] text-[#E8442A]">Corvidet</th>
                 <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-[0.06em] text-[#5A6575]">ChartMogul</th>
                 <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-[0.06em] text-[#5A6575]">Baremetrics</th>
               </tr>
@@ -575,7 +575,7 @@ export default function LandingPage() {
 
       {/* ── FOOTER ── */}
       <footer className="border-t border-[#1E2530] px-6 py-8 text-center text-xs text-[#5A6575]">
-        © 2026 RevPilot ·{" "}
+        © 2026 Corvidet ·{" "}
         <a href="/privacy" className="transition-colors hover:text-[#8B95A5]">Privacy</a>
         {" · "}
         <a href="/contact" className="transition-colors hover:text-[#8B95A5]">Contact</a>

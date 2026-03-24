@@ -125,7 +125,7 @@ export default function DashboardHome() {
         <div>
           <h1 className="text-2xl font-bold text-white">Connect Stripe to unlock your Revenue Pulse</h1>
           <p className="mt-2 max-w-sm text-gray-400">
-            RevPilot needs read-only access to your Stripe account to detect leaks and track MRR.
+            Corvidet needs read-only access to your Stripe account to detect leaks and track MRR.
           </p>
         </div>
         <Button asChild size="lg">

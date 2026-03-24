@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Privacy Policy — RevPilot",
-  description: "How RevPilot collects, uses, and protects your data.",
+  title: "Privacy Policy — Corvidet",
+  description: "How Corvidet collects, uses, and protects your data.",
 };
 
 export default function PrivacyPage() {
@@ -11,7 +11,7 @@ export default function PrivacyPage() {
       <nav className="border-b border-[#1E2530] px-6 py-4">
         <Link href="/" className="flex items-center gap-2 text-[17px] font-bold tracking-tight text-[#E8ECF1] w-fit">
           <span className="h-2 w-2 rounded-full bg-[#E8442A]" />
-          RevPilot
+          Corvidet
         </Link>
       </nav>
 
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="mb-3 text-lg font-semibold text-[#E8ECF1]">Your rights</h2>
-            <p>You can request a copy of your data, ask us to delete your account, or disconnect Stripe at any time. To exercise these rights, email us at <a href="mailto:privacy@revpilot.dev" className="text-[#E8442A] hover:underline">privacy@revpilot.dev</a>.</p>
+            <p>You can request a copy of your data, ask us to delete your account, or disconnect Stripe at any time. To exercise these rights, email us at <a href="mailto:privacy@corvidet.com" className="text-[#E8442A] hover:underline">privacy@corvidet.com</a>.</p>
           </section>
 
           <section>
@@ -64,13 +64,13 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="mb-3 text-lg font-semibold text-[#E8ECF1]">Contact</h2>
-            <p>Questions about this policy? Email <a href="mailto:privacy@revpilot.dev" className="text-[#E8442A] hover:underline">privacy@revpilot.dev</a>.</p>
+            <p>Questions about this policy? Email <a href="mailto:privacy@corvidet.com" className="text-[#E8442A] hover:underline">privacy@corvidet.com</a>.</p>
           </section>
         </div>
       </div>
 
       <footer className="border-t border-[#1E2530] px-6 py-8 text-center text-xs text-[#5A6575]">
-        © 2026 RevPilot ·{" "}
+        © 2026 Corvidet ·{" "}
         <Link href="/" className="transition-colors hover:text-[#8B95A5]">Home</Link>
         {" · "}
         <Link href="/contact" className="transition-colors hover:text-[#8B95A5]">Contact</Link>

@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "RevPilot — Revenue Intelligence for SaaS Founders",
+  title: "Corvidet — Secure Your Stripe Revenue",
   description:
     "Detect Stripe revenue leaks, track MRR, and surface recovery opportunities. Built for bootstrapped SaaS founders doing $3K–$50K MRR.",
   openGraph: {
-    title: "RevPilot — Revenue Intelligence for SaaS Founders",
+    title: "Corvidet — Secure Your Stripe Revenue",
     description:
       "Find failed charges, expiring cards, and at-risk subscriptions in one scan. Powered by Stripe + Claude AI.",
     images: [{ url: "/og-image.svg", width: 1200, height: 630 }],

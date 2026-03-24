@@ -143,8 +143,8 @@ function LoginForm() {
         <CardHeader className="px-8 pt-10 pb-0">
           {/* Logo / Brand */}
           <div className="mb-8 text-center">
-            <div className="text-[2rem] font-extrabold tracking-tight text-gray-50">RevPilot</div>
-            <p className="mt-1.5 text-sm text-gray-500">Revenue intelligence for bootstrapped SaaS</p>
+            <div className="text-[2rem] font-extrabold tracking-tight text-gray-50">Corvidet</div>
+            <p className="mt-1.5 text-sm text-gray-500">Secure your Stripe revenue</p>
           </div>
         </CardHeader>
 

@@ -236,7 +236,7 @@ export default function DemoPage() {
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600">
             <Zap className="h-4 w-4 text-white" />
           </div>
-          <span className="font-semibold text-white">RevPilot</span>
+          <span className="font-semibold text-white">Corvidet</span>
           <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-xs font-medium text-amber-400">
             Demo — sample data
           </span>

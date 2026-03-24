@@ -65,7 +65,7 @@ async function assembleContext(userId: string, connectionId: string) {
 
 function buildSystemPrompt(context: CopilotContext) {
   const m = context.currentMetrics;
-  const parts = ["You are RevPilot AI, a Stripe revenue copilot. Be concise, data-driven, and action-oriented."];
+  const parts = ["You are Corvidet AI, a Stripe revenue copilot. Be concise, data-driven, and action-oriented."];
 
   if (m) {
     parts.push(`\nCurrent Metrics:\n- MRR: $${m.mrr}\n- ARR: $${m.arr}\n- Active Customers: ${m.active_customers}\n- ARPU: $${m.arpu}\n- Churn Rate: ${(m.churn_rate * 100).toFixed(2)}%\n- NRR: ${(m.nrr * 100).toFixed(1)}%`);

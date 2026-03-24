@@ -19,7 +19,7 @@ interface SendEmailParams {
 export async function sendViaResend({ to, subject, html }: SendEmailParams) {
   const resend = getResend();
   return resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || "RevPilot <alerts@revpilot.dev>",
+    from: process.env.RESEND_FROM_EMAIL || "Corvidet <alerts@corvidet.com>",
     to: Array.isArray(to) ? to : [to],
     subject,
     html,

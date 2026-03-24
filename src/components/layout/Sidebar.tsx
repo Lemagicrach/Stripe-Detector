@@ -99,7 +99,7 @@ export function Sidebar() {
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-sm shadow-lg shadow-blue-500/20">
           R
         </div>
-        <span className="text-lg font-bold text-white tracking-tight">RevPilot</span>
+        <span className="text-lg font-bold text-white tracking-tight">Corvidet</span>
       </div>
 
       {/* Navigation */}

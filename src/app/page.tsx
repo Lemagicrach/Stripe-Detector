@@ -221,9 +221,15 @@ export default function LandingPage() {
       {/* ── NAV ── */}
       <nav className="sticky top-0 z-50 border-b border-[#1E2530] bg-[#0B0E11]/85 backdrop-blur-xl">
         <div className="flex items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2 text-[17px] font-bold tracking-tight text-[#E8ECF1]">
-            <span className="h-2 w-2 rounded-full bg-[#E8442A]" />
-            Corvidet
+          <Link href="/" className="flex items-center gap-2.5">
+            <img
+              src="/Modern Logo with Geometric Crow and Teal Accents.png"
+              alt="Corvidet"
+              width={36}
+              height={36}
+              className="rounded-lg object-contain"
+            />
+            <span className="text-[17px] font-bold tracking-tight text-[#E8ECF1]">Corvidet</span>
           </Link>
 
           {/* Desktop links */}

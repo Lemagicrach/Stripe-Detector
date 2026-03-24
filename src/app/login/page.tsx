@@ -142,9 +142,18 @@ function LoginForm() {
       <Card className="w-full max-w-[420px] border-gray-800 bg-gray-900 px-0 py-0">
         <CardHeader className="px-8 pt-10 pb-0">
           {/* Logo / Brand */}
-          <div className="mb-8 text-center">
-            <div className="text-[2rem] font-extrabold tracking-tight text-gray-50">Corvidet</div>
-            <p className="mt-1.5 text-sm text-gray-500">Secure your Stripe revenue</p>
+          <div className="mb-8 flex flex-col items-center gap-3">
+            <img
+              src="/Modern Logo with Geometric Crow and Teal Accents.png"
+              alt="Corvidet"
+              width={56}
+              height={56}
+              className="rounded-xl object-contain"
+            />
+            <div>
+              <div className="text-[1.6rem] font-extrabold tracking-tight text-gray-50 text-center">Corvidet</div>
+              <p className="mt-1 text-sm text-gray-500 text-center">Secure your Stripe revenue</p>
+            </div>
           </div>
         </CardHeader>
 

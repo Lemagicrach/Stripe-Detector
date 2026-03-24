@@ -1,17 +1,12 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Corvidet — Secure Your Stripe Revenue",
+  title: "Corvidet â€” Secure Your Stripe Revenue",
   description:
-    "Detect Stripe revenue leaks, track MRR, and surface recovery opportunities. Built for bootstrapped SaaS founders doing $3K–$50K MRR.",
-  icons: {
-    icon: "/Modern Logo with Geometric Crow and Teal Accents.png",
-    shortcut: "/Modern Logo with Geometric Crow and Teal Accents.png",
-    apple: "/Modern Logo with Geometric Crow and Teal Accents.png",
-  },
+    "Detect Stripe revenue leaks, track MRR, and surface recovery opportunities. Built for bootstrapped SaaS founders doing $3Kâ€“$50K MRR.",
   openGraph: {
-    title: "Corvidet — Secure Your Stripe Revenue",
+    title: "Corvidet â€” Secure Your Stripe Revenue",
     description:
       "Find failed charges, expiring cards, and at-risk subscriptions in one scan. Powered by Stripe + Claude AI.",
     images: [{ url: "/Geometric Raven Logo with Tagline for Trust.png", width: 1080, height: 1080 }],

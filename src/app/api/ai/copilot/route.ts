@@ -1,4 +1,4 @@
-// src/app/api/ai/copilot/route.ts
+﻿// src/app/api/ai/copilot/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
@@ -95,7 +95,7 @@ function buildSystemPrompt(context: CopilotContext) {
 
 export async function POST(req: NextRequest) {
   try {
-    // Burst rate limit (global) — prevents API abuse regardless of plan
+    // Burst rate limit (global) â€” prevents API abuse regardless of plan
     const { allowed } = checkRateLimit({ key: "ai-copilot", limit: 20, windowMs: 60_000 });
     if (!allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
 
     const admin = getSupabaseAdminClient();
 
-    // ── Per-plan monthly AI query enforcement ──
+    // â”€â”€ Per-plan monthly AI query enforcement â”€â”€
     const { data: profileRaw } = await admin
       .from("user_profiles")
       .select("plan")

@@ -1,4 +1,4 @@
-// src/app/api/webhooks/stripe-connect/route.ts
+﻿// src/app/api/webhooks/stripe-connect/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient, getStripeServerClient } from "@/lib/server-clients";
 import type Stripe from "stripe";

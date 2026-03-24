@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 export const dynamic = "force-dynamic";
 import { Suspense, useState, useEffect, useRef, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -15,7 +15,7 @@ function humanizeError(msg: string): { text: string; isRateLimit: boolean } {
   const lower = msg.toLowerCase();
   if (lower.includes("rate limit") || lower.includes("email rate limit")) {
     return {
-      text: "Too many requests — please wait a minute then try again, or use Google to sign in instantly.",
+      text: "Too many requests â€” please wait a minute then try again, or use Google to sign in instantly.",
       isRateLimit: true,
     };
   }
@@ -160,11 +160,11 @@ function LoginForm() {
         <CardContent className="px-8 pb-10">
           {sent ? (
             <div className="text-center">
-              <div className="mb-4 text-5xl">✉️</div>
+              <div className="mb-4 text-5xl">âœ‰ï¸</div>
               <h2 className="mb-2 text-xl font-semibold text-gray-50">Check your email</h2>
               <p className="mb-3 text-sm leading-relaxed text-gray-400">
                 We sent a login link to{" "}
-                <strong className="text-gray-50">{email}</strong>. Click the link to sign in — from any device.
+                <strong className="text-gray-50">{email}</strong>. Click the link to sign in â€” from any device.
               </p>
               <p className="mb-5 text-xs text-gray-500">Don&apos;t see it? Check your spam folder.</p>
 
@@ -252,7 +252,7 @@ function LoginForm() {
                         onClick={handleGoogle}
                         className="mt-2 block w-full cursor-pointer rounded-lg border border-amber-500/30 bg-amber-500/10 py-2 text-center text-xs font-medium text-amber-300 hover:bg-amber-500/20 transition-colors"
                       >
-                        Sign in with Google instead — no limits
+                        Sign in with Google instead â€” no limits
                       </button>
                     )}
                   </AlertDescription>

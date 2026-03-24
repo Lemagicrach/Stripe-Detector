@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
@@ -314,7 +314,7 @@ export default function BillingPage() {
         <CardContent className="p-5 text-sm text-gray-400">
           <p>
             <span className="font-semibold text-gray-300">MRR cap for your plan: </span>
-            ${limits.mrrCapUsd.toLocaleString()} — accounts tracking more MRR than their plan cap will be
+            ${limits.mrrCapUsd.toLocaleString()} â€” accounts tracking more MRR than their plan cap will be
             prompted to upgrade.
           </p>
         </CardContent>

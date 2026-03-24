@@ -1,4 +1,4 @@
-// src/app/api/leaks/run-scan/route.ts
+﻿// src/app/api/leaks/run-scan/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";

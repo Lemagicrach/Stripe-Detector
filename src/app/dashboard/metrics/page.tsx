@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
@@ -155,7 +155,7 @@ export default function MetricsPage() {
               </ResponsiveContainer>
             ) : (
               <div className="flex h-64 items-center justify-center text-sm text-gray-500">
-                Not enough data yet — run more scans to build trend history.
+                Not enough data yet â€” run more scans to build trend history.
               </div>
             )}
           </div>
@@ -164,7 +164,7 @@ export default function MetricsPage() {
             <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
               <p className="text-xs font-medium uppercase tracking-wider text-gray-400">NRR</p>
               <p className="mt-2 font-mono text-2xl font-bold text-white">{(cur.nrr * 100).toFixed(1)}%</p>
-              <p className="mt-1 text-xs text-gray-500">Net revenue retention — above 100% means expansion</p>
+              <p className="mt-1 text-xs text-gray-500">Net revenue retention â€” above 100% means expansion</p>
             </div>
             <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
               <p className="text-xs font-medium uppercase tracking-wider text-gray-400">ARPU</p>

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getStripeServerClient, getSupabaseAdminClient } from "@/lib/server-clients";
 import { handleApiError, unauthorized } from "@/lib/server-error";

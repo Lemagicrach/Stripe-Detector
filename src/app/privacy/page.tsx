@@ -1,7 +1,7 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 export const metadata = {
-  title: "Privacy Policy — Corvidet",
+  title: "Privacy Policy â€” Corvidet",
   description: "How Corvidet collects, uses, and protects your data.",
 };
 
@@ -70,9 +70,9 @@ export default function PrivacyPage() {
       </div>
 
       <footer className="border-t border-[#1E2530] px-6 py-8 text-center text-xs text-[#5A6575]">
-        © 2026 Corvidet ·{" "}
+        Â© 2026 Corvidet Â·{" "}
         <Link href="/" className="transition-colors hover:text-[#8B95A5]">Home</Link>
-        {" · "}
+        {" Â· "}
         <Link href="/contact" className="transition-colors hover:text-[#8B95A5]">Contact</Link>
       </footer>
     </main>

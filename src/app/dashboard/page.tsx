@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -185,7 +185,7 @@ export default function DashboardHome() {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>
-            {criticalLeaks.length} critical issue{criticalLeaks.length > 1 ? "s" : ""} — act today
+            {criticalLeaks.length} critical issue{criticalLeaks.length > 1 ? "s" : ""} â€” act today
           </AlertTitle>
           <AlertDescription>
             <div className="mt-2 space-y-2">

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { EmailOtpType } from "@supabase/supabase-js";
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
 
   const cookieStore = await cookies();
 
-  // ── Path 1: token_hash (cross-device magic link, no PKCE required) ──────────
+  // â”€â”€ Path 1: token_hash (cross-device magic link, no PKCE required) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Supabase sends this when the email template uses {{ .TokenHash }}.
   // Works regardless of which device or browser opens the link.
   const token_hash = searchParams.get("token_hash");
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       : NextResponse.redirect(destination);
   }
 
-  // ── Path 2: PKCE authorization code (same-browser flow) ─────────────────────
+  // â”€â”€ Path 2: PKCE authorization code (same-browser flow) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Used when the magic link is opened in the same browser that requested it,
   // or after Google OAuth.
   const code = searchParams.get("code");
@@ -55,6 +55,6 @@ export async function GET(request: NextRequest) {
       : NextResponse.redirect(destination);
   }
 
-  // No recognised params — direct visit to /auth/callback
+  // No recognised params â€” direct visit to /auth/callback
   return NextResponse.redirect(`${origin}/login`);
 }

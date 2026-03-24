@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -61,7 +61,7 @@ function ConnectPageContent() {
     return () => { cancelled = true }
   }, [router])
 
-  // Initiate Stripe OAuth — calls ?action=start, gets URL, redirects
+  // Initiate Stripe OAuth â€” calls ?action=start, gets URL, redirects
   async function handleConnect() {
     try {
       setConnecting(true)
@@ -159,7 +159,7 @@ function ConnectPageContent() {
                   <div className="text-xs text-gray-500">
                     {conn.stripe_account_id}
                     {conn.last_sync_at && (
-                      <> · Last sync: {new Date(conn.last_sync_at).toLocaleDateString()}</>
+                      <> Â· Last sync: {new Date(conn.last_sync_at).toLocaleDateString()}</>
                     )}
                   </div>
                 </div>
@@ -196,7 +196,7 @@ function ConnectPageContent() {
           </div>
         </div>
       ) : (
-        /* No connections — onboarding CTA */
+        /* No connections â€” onboarding CTA */
         <div className="rounded-2xl border border-gray-800 bg-gray-900/60 p-10 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-900/40">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#818CF8" strokeWidth="1.5">
@@ -210,7 +210,7 @@ function ConnectPageContent() {
           </h2>
           <p className="mx-auto mb-6 max-w-md text-sm leading-relaxed text-gray-400">
             Corvidet uses read-only OAuth access to analyze your subscriptions,
-            detect failed payments, expiring cards, and churn risks — then shows
+            detect failed payments, expiring cards, and churn risks â€” then shows
             you exactly how to recover the revenue.
           </p>
 
@@ -239,9 +239,9 @@ function ConnectPageContent() {
               </svg>
               Read-only access
             </span>
-            <span>·</span>
+            <span>Â·</span>
             <span>OAuth 2.0</span>
-            <span>·</span>
+            <span>Â·</span>
             <span>Disconnect anytime</span>
           </div>
         </div>

@@ -1,4 +1,4 @@
-// src/app/api/user/connection-status/route.ts
+﻿// src/app/api/user/connection-status/route.ts
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";

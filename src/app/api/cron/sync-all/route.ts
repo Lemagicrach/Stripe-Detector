@@ -1,4 +1,4 @@
-// src/app/api/cron/sync-all/route.ts
+﻿// src/app/api/cron/sync-all/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { syncStripeMetrics } from "@/lib/stripe-metrics";

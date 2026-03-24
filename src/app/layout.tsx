@@ -12,7 +12,6 @@ export const metadata: Metadata = {
     images: [{ url: "/og-image.svg", width: 1200, height: 630 }],
     type: "website",
   },
-  icons: { icon: "/icon.svg" },
 };
 
 export default function RootLayout({

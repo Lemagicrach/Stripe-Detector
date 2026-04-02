@@ -1,4 +1,4 @@
-﻿# CLAUDE.md â€” RevPilot Revenue Leaks Detector
+﻿# CLAUDE.md â€” CORVIDET Revenue Leaks Detector
 
 > This file tells Claude Code how to work on this project like a senior SaaS engineer.
 > Keep it at the repo root. Claude reads it automatically on every session.
@@ -7,12 +7,12 @@
 
 ## Project Identity
 
-**RevPilot** is a Stripe revenue intelligence SaaS that detects revenue leaks, tracks MRR, and surfaces recovery opportunities for bootstrapped SaaS founders ($3Kâ€“$50K MRR).
+**CORVIDET** is a Stripe revenue intelligence SaaS that detects revenue leaks, tracks MRR, and surfaces recovery opportunities for bootstrapped SaaS founders ($3Kâ€“$50K MRR).
 
 - **Stack**: Next.js 16 (App Router, Turbopack), TypeScript, Supabase (Postgres + Auth + RLS), Stripe Connect OAuth, Tailwind CSS
 - **Hosting**: Vercel (frontend + serverless), Supabase (database + auth)
 - **AI**: Anthropic Claude API (revenue copilot + anomaly detection)
-- **Monorepo**: Single `revpilot/` directory, no workspace or turborepo
+- **Monorepo**: Single `CORVIDET/` directory, no workspace or turborepo
 
 ---
 

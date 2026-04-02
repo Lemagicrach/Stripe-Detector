@@ -1,4 +1,4 @@
-﻿// src/app/api/ai/copilot/route.ts
+// src/app/api/ai/copilot/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";

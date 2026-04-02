@@ -1,4 +1,4 @@
-﻿// src/app/api/recoveries/timeline/route.ts
+// src/app/api/recoveries/timeline/route.ts
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";

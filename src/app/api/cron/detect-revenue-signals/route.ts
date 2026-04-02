@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { handleApiError } from "@/lib/server-error";
 

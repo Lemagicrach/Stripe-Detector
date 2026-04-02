@@ -1,4 +1,4 @@
-﻿import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 
 // Admin client bypasses RLS. Use only for trusted server-side flows.

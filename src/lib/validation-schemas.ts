@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 
 // Stripe Connect
 export const stripeConnectSchema = z.object({

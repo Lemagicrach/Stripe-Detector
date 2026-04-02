@@ -1,4 +1,4 @@
-﻿// src/lib/stripe-metrics.ts
+// src/lib/stripe-metrics.ts
 import Stripe from "stripe";
 import { decrypt } from "./encryption";
 

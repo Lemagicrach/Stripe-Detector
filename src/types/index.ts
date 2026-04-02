@@ -1,4 +1,4 @@
-﻿// â”€â”€ Revenue Leak Types â”€â”€
+// â”€â”€ Revenue Leak Types â”€â”€
 export type LeakSeverity = "critical" | "warning" | "info";
 export type LeakCategory =
   | "failed_payment"

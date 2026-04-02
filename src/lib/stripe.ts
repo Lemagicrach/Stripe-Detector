@@ -1,4 +1,4 @@
-﻿// Re-export for convenience â€” always use getStripeServerClient() for server-side
+// Re-export for convenience â€” always use getStripeServerClient() for server-side
 export { getStripeServerClient } from "./server-clients";
 
 // â”€â”€ Canonical plan tiers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

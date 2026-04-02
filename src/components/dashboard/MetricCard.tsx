@@ -1,4 +1,4 @@
-﻿import { clsx } from "clsx";
+import { clsx } from "clsx";
 import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface MetricCardProps {

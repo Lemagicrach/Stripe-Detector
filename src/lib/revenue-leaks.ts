@@ -1,4 +1,4 @@
-﻿// src/lib/revenue-leaks.ts
+// src/lib/revenue-leaks.ts
 import { getFailedInvoices, getExpiringCards } from "./stripe-metrics";
 
 interface DetectionContext {

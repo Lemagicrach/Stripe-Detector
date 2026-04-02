@@ -1,4 +1,4 @@
-﻿const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
 interface RateLimitOptions {
   key: string;

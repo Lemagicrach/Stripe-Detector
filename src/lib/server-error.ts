@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 export function handleApiError(error: unknown, context?: string): NextResponse {
   const message = error instanceof Error ? error.message : "Unknown error";

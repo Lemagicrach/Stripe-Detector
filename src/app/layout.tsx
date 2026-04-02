@@ -2,15 +2,26 @@
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Corvidet â€” Secure Your Stripe Revenue",
+  title: “Corvidet — Stripe Revenue Leak Detector”,
   description:
-    "Detect Stripe revenue leaks, track MRR, and surface recovery opportunities. Built for bootstrapped SaaS founders doing $3Kâ€“$50K MRR.",
+    “Find and fix revenue leaks in your Stripe account. Detect failed charges, expiring cards, and at-risk subscriptions in one scan.”,
+  icons: {
+    icon: “/favicon.ico”,
+    apple: “/apple-touch-icon.png”,
+  },
   openGraph: {
-    title: "Corvidet â€” Secure Your Stripe Revenue",
+    title: “Corvidet — Stripe Revenue Leak Detector”,
     description:
-      "Find failed charges, expiring cards, and at-risk subscriptions in one scan. Powered by Stripe + Claude AI.",
-    images: [{ url: "/Geometric Raven Logo with Tagline for Trust.png", width: 1080, height: 1080 }],
-    type: "website",
+      “Find and fix revenue leaks in your Stripe account. Powered by Stripe + Claude AI.”,
+    images: [{ url: “/og-image.png”, width: 1200, height: 630 }],
+    type: “website”,
+    siteName: “Corvidet”,
+  },
+  twitter: {
+    card: “summary_large_image”,
+    title: “Corvidet — Stripe Revenue Leak Detector”,
+    description: “Find and fix revenue leaks in your Stripe account.”,
+    images: [“/og-image.png”],
   },
 };
 

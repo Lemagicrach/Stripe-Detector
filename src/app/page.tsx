@@ -2,35 +2,35 @@
 import Link from "next/link";
 import { useState } from "react";
 
-// â”€â”€ Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Data ─────────────────────────────────────────────────────────────────────
 
 const tickerLeaks = [
   {
-    icon: "ðŸ’³",
-    type: "Failed payment â€” no retry",
+    icon: "💳",
+    type: "Failed payment — no retry",
     desc: "Card declined 3 days ago, no dunning email sent",
-    amount: "âˆ’$149/mo",
+    amount: "−$149/mo",
     color: "red" as const,
   },
   {
-    icon: "â³",
-    type: "Trial expired â€” no conversion nudge",
+    icon: "��",
+    type: "Trial expired — no conversion nudge",
     desc: "14-day trial ended, customer never contacted",
-    amount: "âˆ’$79/mo",
+    amount: "−$79/mo",
     color: "yellow" as const,
   },
   {
-    icon: "ðŸ’³",
+    icon: "💳",
     type: 'Subscription stuck in "past_due"',
     desc: "Active user, payment failed 12 days ago, still using product",
-    amount: "âˆ’$299/mo",
+    amount: "−$299/mo",
     color: "red" as const,
   },
   {
-    icon: "ðŸ“‰",
+    icon: "📉",
     type: "Cancellation wave detected",
     desc: "4 cancellations in 48 h from same pricing tier",
-    amount: "âˆ’$596/mo",
+    amount: "−$596/mo",
     color: "yellow" as const,
   },
 ];
@@ -63,13 +63,13 @@ const steps = [
   {
     num: "02",
     title: "We scan everything",
-    desc: "Failed payments, stuck subscriptions, trial drop-offs, churn velocity, pricing anomalies â€” every signal that points to money leaving your account.",
-    time: "2â€“4 minutes",
+    desc: "Failed payments, stuck subscriptions, trial drop-offs, churn velocity, pricing anomalies — every signal that points to money leaving your account.",
+    time: "2–4 minutes",
   },
   {
     num: "03",
     title: "Get your leak report",
-    desc: "A clear breakdown of what's leaking, how much it's costing you, and exactly what to fix â€” ranked by dollar impact.",
+    desc: "A clear breakdown of what's leaking, how much it's costing you, and exactly what to fix — ranked by dollar impact.",
     time: undefined,
   },
   {
@@ -82,37 +82,37 @@ const steps = [
 
 const leakTypes = [
   {
-    icon: "ðŸ’³",
+    icon: "💳",
     title: "Failed payments without recovery",
     desc: "Declined cards with no retry schedule or dunning email. Revenue that just disappears.",
     stat: "Avg. recoverable: $380/mo per SaaS",
   },
   {
-    icon: "â¸",
+    icon: "��",
     title: "Subscriptions stuck in limbo",
     desc: 'Past-due, incomplete, or "active" subscriptions where the customer stopped paying weeks ago.',
     stat: "Found in 68% of scanned accounts",
   },
   {
-    icon: "ðŸ“‰",
+    icon: "📉",
     title: "Silent churn patterns",
     desc: "Clusters of cancellations from the same plan, cohort, or time period that signal a deeper problem.",
     stat: "Detected 14 days before it hits MRR",
   },
   {
-    icon: "ðŸ””",
+    icon: "🔔",
     title: "Trial-to-paid drop-offs",
     desc: "Trials that expire without a conversion email, payment method prompt, or any engagement signal.",
     stat: "23% avg. trial abandonment rate",
   },
   {
-    icon: "ðŸ·",
+    icon: "��",
     title: "Pricing misconfigurations",
     desc: "Coupons that never expire, legacy plans with outdated pricing, customers grandfathered below cost.",
     stat: "Avg. $200/mo in underpriced subs",
   },
   {
-    icon: "ðŸ¤–",
+    icon: "🤖",
     title: "AI-powered diagnostics",
     desc: "Ask questions in plain English about any metric. Get answers with context, not just numbers.",
     stat: "Powered by real-time Stripe data",
@@ -142,7 +142,7 @@ const plans = [
     note: "/mo",
     subNote: "Under $10K MRR",
     features: ["Full leak scan", "MRR, churn, revenue tracking", "5 AI queries/month", "30-day data retention"],
-    cta: "Start for free â†’",
+    cta: "Start for free →",
     href: "/login",
     featured: false,
   },
@@ -153,7 +153,7 @@ const plans = [
     note: "/mo",
     subNote: "Up to $100K MRR",
     features: ["Continuous leak monitoring", "Real-time churn alerts", "50 AI queries/month", "1-year data retention", "Email support"],
-    cta: "Start 14-day trial â†’",
+    cta: "Start 14-day trial →",
     href: "/login",
     featured: true,
   },
@@ -173,11 +173,11 @@ const plans = [
 const faqs = [
   {
     q: 'What exactly is a "revenue leak"?',
-    a: "Any revenue you should be collecting but aren't â€” failed payments without retry, expired trials without follow-up, subscriptions stuck in broken states, or pricing errors that undercharge customers.",
+    a: "Any revenue you should be collecting but aren't — failed payments without retry, expired trials without follow-up, subscriptions stuck in broken states, or pricing errors that undercharge customers.",
   },
   {
     q: "How is this different from Stripe's dashboard?",
-    a: "Stripe shows you what happened. Corvidet shows you what's going wrong â€” silently. We surface the patterns, anomalies, and broken flows that don't show up in a revenue chart.",
+    a: "Stripe shows you what happened. Corvidet shows you what's going wrong — silently. We surface the patterns, anomalies, and broken flows that don't show up in a revenue chart.",
   },
   {
     q: "Is my Stripe data safe?",
@@ -185,7 +185,7 @@ const faqs = [
   },
   {
     q: "I'm already using ChartMogul / Baremetrics",
-    a: "Corvidet doesn't replace your analytics dashboard â€” it complements it. Those tools show metrics. We find the problems hiding inside those metrics. Many users run both.",
+    a: "Corvidet doesn't replace your analytics dashboard — it complements it. Those tools show metrics. We find the problems hiding inside those metrics. Many users run both.",
   },
   {
     q: "How fast does it work?",
@@ -197,15 +197,15 @@ const faqs = [
   },
 ];
 
-// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function VsCell({ value }: { value: boolean | string }) {
-  if (value === true)  return <td className="px-4 py-3.5 text-center text-sm font-semibold text-[#2ECC71]">âœ“</td>;
-  if (value === false) return <td className="px-4 py-3.5 text-center text-sm text-[#5A6575]">âœ•</td>;
+  if (value === true)  return <td className="px-4 py-3.5 text-center text-sm font-semibold text-[#2ECC71]">✓</td>;
+  if (value === false) return <td className="px-4 py-3.5 text-center text-sm text-[#5A6575]">✕</td>;
   return <td className="px-4 py-3.5 text-center text-sm text-[#8B95A5]">{value}</td>;
 }
 
-// â”€â”€ Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -218,7 +218,7 @@ export default function LandingPage() {
         <div className="orb orb-b" />
       </div>
 
-      {/* â”€â”€ NAV â”€â”€ */}
+      {/* ── NAV ── */}
       <nav className="sticky top-0 z-50 border-b border-[#1E2530] bg-[#0B0E11]/85 backdrop-blur-xl">
         <div className="flex items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2.5">
@@ -303,7 +303,7 @@ export default function LandingPage() {
         )}
       </nav>
 
-      {/* â”€â”€ HERO â”€â”€ */}
+      {/* ── HERO ── */}
       <section className="relative mx-auto max-w-[860px] px-6 pb-16 pt-24 text-center">
         {/* Radial glow */}
         <div aria-hidden className="hero-glow" />
@@ -335,7 +335,7 @@ export default function LandingPage() {
             href="/demo"
             className="inline-flex items-center gap-2 rounded-lg bg-[#E8442A] px-5 py-3 text-[15px] font-semibold text-white transition-all hover:brightness-110 hover:-translate-y-px"
           >
-            Run live demo scan â†’
+            Run live demo scan →
           </Link>
           <a
             href="#how"
@@ -346,11 +346,11 @@ export default function LandingPage() {
         </div>
 
         <p className="fade-up delay-3 mt-5 text-xs text-[#5A6575]">
-          Read-only access Â· Free under $10K MRR Â· Disconnect anytime
+          Read-only access · Free under $10K MRR · Disconnect anytime
         </p>
       </section>
 
-      {/* â”€â”€ LEAK TICKER â”€â”€ */}
+      {/* ── LEAK TICKER ── */}
       <section className="mx-auto max-w-[700px] px-6 pb-20">
         <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.1em] text-[#5A6575]">
           Example leaks we detect in Stripe accounts
@@ -382,7 +382,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* â”€â”€ PROBLEM STATS â”€â”€ */}
+      {/* ── PROBLEM STATS ── */}
       <section className="mx-auto max-w-5xl px-6 py-20">
         <div className="mb-12 text-center">
           <h2 className="text-[clamp(26px,3.5vw,38px)] font-bold tracking-[-0.02em]">The leaks nobody talks about</h2>
@@ -402,7 +402,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* â”€â”€ HOW IT WORKS â”€â”€ */}
+      {/* ── HOW IT WORKS ── */}
       <section id="how" className="mx-auto max-w-[780px] px-6 py-20">
         <div className="mb-12 text-center">
           <h2 className="text-[clamp(26px,3.5vw,38px)] font-bold tracking-[-0.02em]">
@@ -430,7 +430,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* â”€â”€ WHAT WE FIND â”€â”€ */}
+      {/* ── WHAT WE FIND ── */}
       <section id="leaks" className="mx-auto max-w-5xl px-6 py-20">
         <div className="mb-12 text-center">
           <h2 className="text-[clamp(26px,3.5vw,38px)] font-bold tracking-[-0.02em]">
@@ -452,7 +452,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* â”€â”€ COMPARISON TABLE â”€â”€ */}
+      {/* ── COMPARISON TABLE ── */}
       <section className="mx-auto max-w-[700px] px-6 py-20">
         <div className="mb-12 text-center">
           <h2 className="text-[clamp(26px,3.5vw,38px)] font-bold tracking-[-0.02em]">Corvidet vs. the alternatives</h2>
@@ -484,7 +484,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* â”€â”€ PRICING â”€â”€ */}
+      {/* ── PRICING ── */}
       <section id="pricing" className="mx-auto max-w-5xl px-6 py-20">
         <div className="mb-12 text-center">
           <h2 className="text-[clamp(26px,3.5vw,38px)] font-bold tracking-[-0.02em]">One scan could pay for a year</h2>
@@ -512,7 +512,7 @@ export default function LandingPage() {
               <ul className="mt-5 flex-grow space-y-2.5">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-start gap-2.5 text-sm text-[#8B95A5]">
-                    <span className="mt-0.5 shrink-0 font-semibold text-[#2ECC71]">âœ“</span>
+                    <span className="mt-0.5 shrink-0 font-semibold text-[#2ECC71]">✓</span>
                     {f}
                   </li>
                 ))}
@@ -532,7 +532,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* â”€â”€ FAQ â”€â”€ */}
+      {/* ── FAQ ── */}
       <section id="faq" className="mx-auto max-w-[640px] px-6 py-20">
         <div className="mb-12 text-center">
           <h2 className="text-[clamp(26px,3.5vw,38px)] font-bold tracking-[-0.02em]">Questions</h2>
@@ -550,7 +550,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* â”€â”€ BOTTOM CTA â”€â”€ */}
+      {/* ── BOTTOM CTA ── */}
       <section className="mx-auto max-w-[640px] px-6 pb-28 pt-4 text-center">
         <div className="rounded-2xl border border-[#E8442A]/20 bg-[#E8442A]/5 px-8 py-12">
           <h2 className="text-[clamp(24px,3vw,34px)] font-bold leading-tight tracking-[-0.02em]">
@@ -564,7 +564,7 @@ export default function LandingPage() {
               href="/demo"
               className="inline-flex items-center gap-2 rounded-lg bg-[#E8442A] px-6 py-3 font-semibold text-white transition-all hover:brightness-110 hover:-translate-y-px"
             >
-              Run live demo scan â†’
+              Run live demo scan →
             </Link>
             <Link
               href="/login"
@@ -574,16 +574,16 @@ export default function LandingPage() {
             </Link>
           </div>
           <p className="mt-5 text-xs text-[#5A6575]">
-            No credit card required Â· Read-only access Â· Cancel anytime
+            No credit card required · Read-only access · Cancel anytime
           </p>
         </div>
       </section>
 
-      {/* â”€â”€ FOOTER â”€â”€ */}
+      {/* ── FOOTER ── */}
       <footer className="border-t border-[#1E2530] px-6 py-8 text-center text-xs text-[#5A6575]">
-        Â© 2026 Corvidet Â·{" "}
+        © 2026 Corvidet ·{" "}
         <a href="/privacy" className="transition-colors hover:text-[#8B95A5]">Privacy</a>
-        {" Â· "}
+        {" · "}
         <a href="/contact" className="transition-colors hover:text-[#8B95A5]">Contact</a>
       </footer>
     </main>

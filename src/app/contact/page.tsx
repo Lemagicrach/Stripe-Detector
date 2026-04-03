@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Contact â€” Corvidet",
+  title: "Contact - Corvidet",
   description: "Get in touch with the Corvidet team.",
 };
 
@@ -18,7 +18,7 @@ export default function ContactPage() {
       <div className="mx-auto max-w-[560px] px-6 py-24 text-center">
         <h1 className="text-3xl font-bold tracking-tight">Get in touch</h1>
         <p className="mt-3 text-[#8B95A5]">
-          Questions, feedback, or a bug to report â€” we read every email.
+          Questions, feedback, or a bug to report - we read every email.
         </p>
 
         <div className="mt-10 grid gap-4 text-left">
@@ -27,7 +27,7 @@ export default function ContactPage() {
             className="flex items-start gap-4 rounded-xl border border-[#1E2530] bg-[#12161B] px-6 py-5 transition-colors hover:border-[#2A3444]"
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#E8442A]/10 text-lg">
-              âœ‰ï¸
+              ✉️
             </div>
             <div>
               <p className="font-semibold text-[#E8ECF1]">General support</p>
@@ -41,7 +41,7 @@ export default function ContactPage() {
             className="flex items-start gap-4 rounded-xl border border-[#1E2530] bg-[#12161B] px-6 py-5 transition-colors hover:border-[#2A3444]"
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1E2530] text-lg">
-              ðŸ”’
+              ðŸ"'
             </div>
             <div>
               <p className="font-semibold text-[#E8ECF1]">Privacy &amp; data</p>
@@ -57,9 +57,9 @@ export default function ContactPage() {
       </div>
 
       <footer className="border-t border-[#1E2530] px-6 py-8 text-center text-xs text-[#5A6575]">
-        Â© 2026 Corvidet Â·{" "}
+        © 2026 Corvidet ·{" "}
         <Link href="/" className="transition-colors hover:text-[#8B95A5]">Home</Link>
-        {" Â· "}
+        {" · "}
         <Link href="/privacy" className="transition-colors hover:text-[#8B95A5]">Privacy</Link>
       </footer>
     </main>

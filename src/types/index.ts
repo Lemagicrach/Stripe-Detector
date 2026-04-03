@@ -1,4 +1,4 @@
-// â”€â”€ Revenue Leak Types â”€â”€
+// â"€â"€ Revenue Leak Types â"€â"€
 export type LeakSeverity = "critical" | "warning" | "info";
 export type LeakCategory =
   | "failed_payment"
@@ -24,7 +24,7 @@ export interface RevenueLeak {
   status: "open" | "in_progress" | "resolved" | "dismissed";
 }
 
-// â”€â”€ Metrics Types â”€â”€
+// â"€â"€ Metrics Types â"€â"€
 export interface SaaSMetrics {
   mrr: number;
   arr: number;
@@ -40,7 +40,7 @@ export interface SaaSMetrics {
   contractionMrr: number;
 }
 
-// â”€â”€ Churn Types â”€â”€
+// â"€â"€ Churn Types â"€â"€
 export interface ChurnPrediction {
   customerId: string;
   customerEmail: string;
@@ -52,7 +52,7 @@ export interface ChurnPrediction {
   currentMrr: number;
 }
 
-// â”€â”€ Recovery Types â”€â”€
+// â"€â"€ Recovery Types â"€â"€
 export interface RecoveryEvent {
   id: string;
   type: "payment_retry" | "card_update" | "reactivation" | "manual_recovery";
@@ -62,7 +62,7 @@ export interface RecoveryEvent {
   leakId?: string;
 }
 
-// â”€â”€ User / Connection Types â”€â”€
+// â"€â"€ User / Connection Types â"€â"€
 export type PlanTier = "free" | "growth" | "business"; // synced with PLAN_LIMITS in lib/stripe.ts
 
 export interface UserProfile {

@@ -95,7 +95,7 @@ function buildSystemPrompt(context: CopilotContext) {
 
 export async function POST(req: NextRequest) {
   try {
-    // Burst rate limit (global) â€” prevents API abuse regardless of plan
+    // Burst rate limit (global) - prevents API abuse regardless of plan
     const { allowed } = checkRateLimit({ key: "ai-copilot", limit: 20, windowMs: 60_000 });
     if (!allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
 
     const admin = getSupabaseAdminClient();
 
-    // â”€â”€ Per-plan monthly AI query enforcement â”€â”€
+    // â"€â"€ Per-plan monthly AI query enforcement â"€â"€
     const { data: profileRaw } = await admin
       .from("user_profiles")
       .select("plan")

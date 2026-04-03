@@ -1,7 +1,7 @@
-// Re-export for convenience â€” always use getStripeServerClient() for server-side
+// Re-export for convenience - always use getStripeServerClient() for server-side
 export { getStripeServerClient } from "./server-clients";
 
-// â”€â”€ Canonical plan tiers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ Canonical plan tiers â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 // Single source of truth for all plan configuration.
 // All enforcement, billing, and UI must reference PLAN_LIMITS.
 

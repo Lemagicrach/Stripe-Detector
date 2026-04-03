@@ -177,9 +177,9 @@ export default function CopilotPage() {
             >
               {msg.content || (
                 <span className="flex gap-1 items-center text-gray-400">
-                  <span className="animate-bounce [animation-delay:-0.3s]">â€¢</span>
-                  <span className="animate-bounce [animation-delay:-0.15s]">â€¢</span>
-                  <span className="animate-bounce">â€¢</span>
+                  <span className="animate-bounce [animation-delay:-0.3s]">•</span>
+                  <span className="animate-bounce [animation-delay:-0.15s]">•</span>
+                  <span className="animate-bounce">•</span>
                 </span>
               )}
             </div>
@@ -211,7 +211,7 @@ export default function CopilotPage() {
           </button>
         </div>
         <p className="mt-2 text-center text-xs text-gray-600">
-          Enter to send Â· Shift+Enter for new line
+          Enter to send · Shift+Enter for new line
         </p>
       </div>
     </div>

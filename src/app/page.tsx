@@ -7,14 +7,14 @@ import { useState } from "react";
 const tickerLeaks = [
   {
     icon: "💳",
-    type: "Failed payment — no retry",
+    type: "Failed payment - no retry",
     desc: "Card declined 3 days ago, no dunning email sent",
     amount: "−$149/mo",
     color: "red" as const,
   },
   {
-    icon: "��",
-    type: "Trial expired — no conversion nudge",
+    icon: "⏱️",
+    type: "Trial expired - no conversion nudge",
     desc: "14-day trial ended, customer never contacted",
     amount: "−$79/mo",
     color: "yellow" as const,
@@ -63,13 +63,13 @@ const steps = [
   {
     num: "02",
     title: "We scan everything",
-    desc: "Failed payments, stuck subscriptions, trial drop-offs, churn velocity, pricing anomalies — every signal that points to money leaving your account.",
-    time: "2–4 minutes",
+    desc: "Failed payments, stuck subscriptions, trial drop-offs, churn velocity, pricing anomalies - every signal that points to money leaving your account.",
+    time: "2-4 minutes",
   },
   {
     num: "03",
     title: "Get your leak report",
-    desc: "A clear breakdown of what's leaking, how much it's costing you, and exactly what to fix — ranked by dollar impact.",
+    desc: "A clear breakdown of what's leaking, how much it's costing you, and exactly what to fix - ranked by dollar impact.",
     time: undefined,
   },
   {
@@ -88,7 +88,7 @@ const leakTypes = [
     stat: "Avg. recoverable: $380/mo per SaaS",
   },
   {
-    icon: "��",
+    icon: "⚠️",
     title: "Subscriptions stuck in limbo",
     desc: 'Past-due, incomplete, or "active" subscriptions where the customer stopped paying weeks ago.',
     stat: "Found in 68% of scanned accounts",
@@ -106,7 +106,7 @@ const leakTypes = [
     stat: "23% avg. trial abandonment rate",
   },
   {
-    icon: "��",
+    icon: "🏷️",
     title: "Pricing misconfigurations",
     desc: "Coupons that never expire, legacy plans with outdated pricing, customers grandfathered below cost.",
     stat: "Avg. $200/mo in underpriced subs",
@@ -173,11 +173,11 @@ const plans = [
 const faqs = [
   {
     q: 'What exactly is a "revenue leak"?',
-    a: "Any revenue you should be collecting but aren't — failed payments without retry, expired trials without follow-up, subscriptions stuck in broken states, or pricing errors that undercharge customers.",
+    a: "Any revenue you should be collecting but aren't - failed payments without retry, expired trials without follow-up, subscriptions stuck in broken states, or pricing errors that undercharge customers.",
   },
   {
     q: "How is this different from Stripe's dashboard?",
-    a: "Stripe shows you what happened. Corvidet shows you what's going wrong — silently. We surface the patterns, anomalies, and broken flows that don't show up in a revenue chart.",
+    a: "Stripe shows you what happened. Corvidet shows you what's going wrong - silently. We surface the patterns, anomalies, and broken flows that don't show up in a revenue chart.",
   },
   {
     q: "Is my Stripe data safe?",
@@ -185,7 +185,7 @@ const faqs = [
   },
   {
     q: "I'm already using ChartMogul / Baremetrics",
-    a: "Corvidet doesn't replace your analytics dashboard — it complements it. Those tools show metrics. We find the problems hiding inside those metrics. Many users run both.",
+    a: "Corvidet doesn't replace your analytics dashboard - it complements it. Those tools show metrics. We find the problems hiding inside those metrics. Many users run both.",
   },
   {
     q: "How fast does it work?",

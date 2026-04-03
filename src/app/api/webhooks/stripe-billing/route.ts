@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error(`Error handling webhook event ${event.type}:`, err);
-    // Return 200 so Stripe doesn't retry â€” log the failure instead
+    // Return 200 so Stripe doesn't retry - log the failure instead
   }
 
   return NextResponse.json({ received: true });

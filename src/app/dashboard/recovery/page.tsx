@@ -99,7 +99,7 @@ export default function RecoveryPage() {
           <TrendingUp className="mx-auto h-10 w-10 text-gray-600" />
           <p className="mt-3 text-sm text-gray-400">No recoveries recorded yet.</p>
           <p className="mt-1 text-xs text-gray-500">
-            <Link href="/dashboard/leaks" className="text-blue-400 underline">Run a leak scan</Link> â€” recoveries are tracked automatically when leaks are resolved.
+            <Link href="/dashboard/leaks" className="text-blue-400 underline">Run a leak scan</Link> - recoveries are tracked automatically when leaks are resolved.
           </p>
         </div>
       ) : (
@@ -136,10 +136,10 @@ export default function RecoveryPage() {
                 </div>
               </div>
               <p className="mt-3 text-xl font-bold text-white">
-                {topCategory ? (CATEGORY_LABELS[topCategory.category] ?? topCategory.category) : "â€”"}
+                {topCategory ? (CATEGORY_LABELS[topCategory.category] ?? topCategory.category) : "-"}
               </p>
               {topCategory && (
-                <p className="mt-1 text-xs text-gray-500">${topCategory.total.toLocaleString()} Â· {topCategory.count} event{topCategory.count !== 1 ? "s" : ""}</p>
+                <p className="mt-1 text-xs text-gray-500">${topCategory.total.toLocaleString()} · {topCategory.count} event{topCategory.count !== 1 ? "s" : ""}</p>
               )}
             </div>
           </div>

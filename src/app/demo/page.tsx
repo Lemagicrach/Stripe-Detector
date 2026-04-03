@@ -12,7 +12,7 @@ import {
   CheckCircle2, ExternalLink,
 } from "lucide-react";
 
-// â”€â”€ Hardcoded demo data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ Hardcoded demo data â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 const DEMO_MRR_HISTORY = [
   { date: "Feb 6",  mrr: 24100 },
@@ -109,7 +109,7 @@ const DEMO_CUSTOMERS = 94;
 const DEMO_CHURN = 2.7;
 const DEMO_NRR = 104.2;
 
-// â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ Sub-components â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 const SEVERITY_ICON: Record<string, React.ReactNode> = {
   critical: <XCircle className="h-4 w-4 text-red-400" />,
@@ -225,7 +225,7 @@ function LeakCard({ leak }: { leak: typeof DEMO_LEAKS[number] }) {
   );
 }
 
-// â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€ Main page â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 export default function DemoPage() {
   return (
@@ -238,7 +238,7 @@ export default function DemoPage() {
           </div>
           <span className="font-semibold text-white">Corvidet</span>
           <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-xs font-medium text-amber-400">
-            Demo â€” sample data
+            Demo - sample data
           </span>
         </div>
         <Link
@@ -254,11 +254,11 @@ export default function DemoPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white">Revenue Pulse</h1>
-            <p className="mt-1 text-sm text-gray-400">Live scan Â· acme-saas.stripe.com Â· Mar 7, 2026</p>
+            <p className="mt-1 text-sm text-gray-400">Live scan · acme-saas.stripe.com · Mar 7, 2026</p>
           </div>
           <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-400">
             <CheckCircle2 className="h-3.5 w-3.5" />
-            Scan complete â€” 4 leaks found
+            Scan complete - 4 leaks found
           </div>
         </div>
 
@@ -290,7 +290,7 @@ export default function DemoPage() {
         <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-5">
           <div className="mb-3 flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-red-400" />
-            <span className="text-sm font-semibold text-red-300">1 critical issue â€” act today or lose $3,240 this month</span>
+            <span className="text-sm font-semibold text-red-300">1 critical issue - act today or lose $3,240 this month</span>
           </div>
           <div className="flex items-center justify-between rounded-lg bg-gray-900/60 px-4 py-3">
             <span className="text-sm text-gray-200">12 Failed Payments Unrecovered</span>
@@ -303,7 +303,7 @@ export default function DemoPage() {
           <div className="mb-6 flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-white">MRR Trend</p>
-              <p className="text-xs text-gray-400">Last 30 days â€” revenue dip detected Mar 4</p>
+              <p className="text-xs text-gray-400">Last 30 days - revenue dip detected Mar 4</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-blue-500" />
@@ -353,7 +353,7 @@ export default function DemoPage() {
               <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Churn rate</p>
             </div>
             <p className="mt-2 font-mono text-2xl font-bold text-white">{DEMO_CHURN}%</p>
-            <p className="mt-1 text-xs text-gray-500">Industry avg: 3.5% â€” you&apos;re below average</p>
+            <p className="mt-1 text-xs text-gray-500">Industry avg: 3.5% - you&apos;re below average</p>
           </div>
           <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
             <div className="flex items-center gap-2">
@@ -368,7 +368,7 @@ export default function DemoPage() {
         {/* Leak cards */}
         <div>
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-400">
-            Revenue leaks â€” click to expand fix steps
+            Revenue leaks - click to expand fix steps
           </h2>
           <div className="space-y-3">
             {DEMO_LEAKS.map(leak => (
@@ -400,7 +400,7 @@ export default function DemoPage() {
               <div className="rounded-2xl rounded-tl-none border border-purple-500/20 bg-purple-500/5 px-4 py-3 text-sm text-gray-100 leading-relaxed">
                 The March 4 dip (-$550) is consistent with the{" "}
                 <span className="text-red-300 font-medium">12 failed payments</span> detected in your current scan.
-                Five of those failures occurred on Mar 3â€“4 when your payment processor reported elevated decline rates
+                Five of those failures occurred on Mar 3-4 when your payment processor reported elevated decline rates
                 for international cards. Enabling{" "}
                 <span className="text-blue-300 font-medium">Stripe Smart Retries</span> would have recovered an
                 estimated $1,840 automatically. I&apos;d prioritise fixing this before your next billing cycle (Mar 14).
@@ -413,7 +413,7 @@ export default function DemoPage() {
         <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-600/10 to-purple-600/10 p-8 text-center">
           <h2 className="text-2xl font-bold text-white">Ready to scan your real Stripe data?</h2>
           <p className="mx-auto mt-3 max-w-md text-gray-400">
-            Connect in 30 seconds. Read-only OAuth â€” we never touch your money.
+            Connect in 30 seconds. Read-only OAuth - we never touch your money.
             First insights in under 2 minutes.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -435,9 +435,9 @@ export default function DemoPage() {
           </div>
           <div className="mt-5 flex flex-wrap justify-center gap-4 text-xs text-gray-500">
             <span>No credit card required</span>
-            <span>Â·</span>
+            <span>·</span>
             <span>Read-only access</span>
-            <span>Â·</span>
+            <span>·</span>
             <span>Cancel anytime</span>
           </div>
         </div>

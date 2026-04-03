@@ -37,7 +37,7 @@ export function Header() {
     try {
       await supabase.auth.signOut();
     } catch {
-      // signOut failure is non-critical â€” clear local session and redirect anyway
+      // signOut failure is non-critical - clear local session and redirect anyway
     }
     router.push("/login");
   }

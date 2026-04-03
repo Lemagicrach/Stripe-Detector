@@ -164,7 +164,7 @@ export default function LeaksPage() {
       }
       setResult(data);
     } catch {
-      setError("Network error â€” check your connection.");
+      setError("Network error - check your connection.");
     } finally {
       setScanning(false);
     }
@@ -208,7 +208,7 @@ export default function LeaksPage() {
             {error}{" "}
             {error.includes("Connect") && (
               <Link href="/dashboard/connect" className="underline font-medium">
-                Connect Stripe â†’
+                Connect Stripe â†'
               </Link>
             )}
           </AlertDescription>
@@ -256,7 +256,7 @@ export default function LeaksPage() {
       {result && result.leaks.length > 0 && (
         <div className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-            {result.leaks.length} issue{result.leaks.length > 1 ? "s" : ""} found â€” click any to see fix steps
+            {result.leaks.length} issue{result.leaks.length > 1 ? "s" : ""} found - click any to see fix steps
           </p>
           {result.leaks.map((leak) => (
             <LeakCard key={leak.id} leak={leak} />

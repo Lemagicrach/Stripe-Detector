@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { createBrowserClient } from "@supabase/ssr";
+import { useEffect, useState } from "react";
 import { PLAN_LIMITS, type PlanTier } from "@/lib/stripe";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { CheckCircle2, Zap, ArrowRight, ExternalLink, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -46,19 +46,18 @@ export default function BillingPage() {
   const [checkoutLoading, setCheckoutLoading] = useState<PlanTier | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const supabase = useMemo(
-    () =>
-      createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      ),
-    []
-  );
+  const supabase = getSupabaseBrowserClient();
 
   useEffect(() => {
     async function loadUsage() {
       setLoading(true);
+
+      if (!supabase) {
+        setError("Billing is unavailable because Supabase is not configured for this deployment.");
+        setLoading(false);
+        return;
+      }
+
       try {
         const {
           data: { user },
@@ -96,8 +95,7 @@ export default function BillingPage() {
       }
     }
     void loadUsage();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [supabase]);
 
   async function startCheckout(plan: PlanTier) {
     setCheckoutLoading(plan);

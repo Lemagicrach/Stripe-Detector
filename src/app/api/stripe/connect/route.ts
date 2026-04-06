@@ -83,10 +83,25 @@ export async function GET(req: NextRequest) {
       oauthUrl.searchParams.set("state", state);
       oauthUrl.searchParams.set("stripe_user[email]", user.email || "");
 
-      return NextResponse.json({ url: oauthUrl.toString() });
+      const response = NextResponse.json({ url: oauthUrl.toString() });
+      response.cookies.set("stripe_oauth_state", state, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 600,
+        path: "/api/stripe/connect",
+      });
+      return response;
     }
 
     if (code) {
+      // Verify CSRF state
+      const cookieState = req.cookies.get("stripe_oauth_state")?.value;
+      const queryState = url.searchParams.get("state");
+      if (!cookieState || !queryState || cookieState !== queryState) {
+        return redirectToConnect("error", { reason: "state_mismatch" });
+      }
+
       const stripe = getStripeServerClient();
       const oauth = await stripe.oauth.token({ grant_type: "authorization_code", code });
 
@@ -129,7 +144,9 @@ export async function GET(req: NextRequest) {
         account_id: oauth.stripe_user_id,
       });
 
-      return redirectToConnect("success", { account: oauth.stripe_user_id });
+      const successResponse = redirectToConnect("success", { account: oauth.stripe_user_id });
+      successResponse.cookies.delete("stripe_oauth_state");
+      return successResponse;
     }
 
     const error = url.searchParams.get("error");

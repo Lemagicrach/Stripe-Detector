@@ -40,11 +40,13 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from /login to their intended destination
+  // Redirect authenticated users away from /login to their intended destination.
+  // Validate `next` to ensure it is a relative path and cannot be used for open redirect.
   if (user && pathname === "/login") {
-    const next = request.nextUrl.searchParams.get("next") || "/dashboard";
+    const raw = request.nextUrl.searchParams.get("next") || "/dashboard";
+    const safe = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/dashboard";
     const url = request.nextUrl.clone();
-    url.pathname = next;
+    url.pathname = safe;
     url.searchParams.delete("next");
     return NextResponse.redirect(url);
   }

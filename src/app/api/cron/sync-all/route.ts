@@ -2,14 +2,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { syncStripeMetrics } from "@/lib/stripe-metrics";
+import { verifyCronAuth } from "@/lib/cron-auth";
 
 export const maxDuration = 300;
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authError = verifyCronAuth(req);
+  if (authError) return authError;
 
   const admin = getSupabaseAdminClient();
   const { data: connections } = await admin

@@ -1,11 +1,10 @@
 "use client";
-export const dynamic = "force-dynamic";
 import { Suspense, useState, useEffect, useRef, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createBrowserClient } from "@supabase/ssr";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { AlertTriangle } from "lucide-react";
 
 const COOLDOWN_SECONDS = 60;
@@ -32,17 +31,12 @@ function humanizeError(msg: string): { text: string; isRateLimit: boolean } {
 }
 
 function LoginForm() {
-  const supabase = useMemo(
-    () =>
-      createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      ),
-    []
-  );
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/dashboard";
+  const configurationError =
+    "Authentication is unavailable because Supabase is not configured for this deployment.";
 
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -58,6 +52,7 @@ function LoginForm() {
 
   // Redirect to destination if already authenticated
   useEffect(() => {
+    if (!supabase) return;
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) router.replace(next);
     });
@@ -103,6 +98,10 @@ function LoginForm() {
   async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault();
     if (!email.trim() || cooldown > 0) return;
+    if (!supabase) {
+      setError(configurationError);
+      return;
+    }
     setLoading(true);
     setError(null);
     setIsRateLimit(false);
@@ -126,6 +125,10 @@ function LoginForm() {
   }
 
   async function handleGoogle() {
+    if (!supabase) {
+      setError(configurationError);
+      return;
+    }
     setError(null);
     const callbackUrl = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
     const { error } = await supabase.auth.signInWithOAuth({
@@ -135,7 +138,8 @@ function LoginForm() {
     if (error) setError(humanizeError(error.message).text);
   }
 
-  const canSubmit = !loading && !!email.trim() && cooldown === 0;
+  const canSubmit = !!supabase && !loading && !!email.trim() && cooldown === 0;
+  const displayError = error ?? (!supabase ? configurationError : null);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0B1120] p-6">
@@ -204,6 +208,7 @@ function LoginForm() {
                 variant="outline"
                 className="mb-5 w-full border-gray-700 bg-gray-800 text-gray-50 hover:border-gray-600 hover:bg-gray-700 hover:text-gray-50 h-11"
                 onClick={handleGoogle}
+                disabled={!supabase}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className="shrink-0">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -230,6 +235,7 @@ function LoginForm() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@company.com"
                   required
+                  disabled={!supabase}
                   className="mb-4 w-full rounded-lg border border-gray-800 bg-slate-900 px-3.5 py-3 text-sm text-gray-50 outline-none focus:border-gray-600"
                 />
                 <Button
@@ -241,11 +247,11 @@ function LoginForm() {
                 </Button>
               </form>
 
-              {error && (
+              {displayError && (
                 <Alert variant={isRateLimit ? "warning" : "destructive"} className="mt-4">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    {error}
+                    {displayError}
                     {isRateLimit && (
                       <button
                         type="button"

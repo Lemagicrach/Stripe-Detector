@@ -2,8 +2,8 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, LogOut, User } from "lucide-react";
-import { useState, useRef, useEffect, useMemo } from "react";
-import { createBrowserClient } from "@supabase/ssr";
+import { useState, useRef, useEffect } from "react";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const PAGE_LABELS: Record<string, string> = {
   "/dashboard": "Revenue Pulse",
@@ -27,17 +27,15 @@ export function Header() {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const pageLabel = PAGE_LABELS[pathname] ?? "Dashboard";
-
-  const supabase = useMemo(() => createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  ), []);
+  const supabase = getSupabaseBrowserClient();
 
   async function handleSignOut() {
-    try {
-      await supabase.auth.signOut();
-    } catch {
-      // signOut failure is non-critical - clear local session and redirect anyway
+    if (supabase) {
+      try {
+        await supabase.auth.signOut();
+      } catch {
+        // signOut failure is non-critical - clear local session and redirect anyway
+      }
     }
     router.push("/login");
   }

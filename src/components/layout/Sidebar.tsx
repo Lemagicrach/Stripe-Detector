@@ -20,8 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { createBrowserClient } from "@supabase/ssr";
-import { useMemo } from "react";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type NavItem = {
   href: string;
@@ -76,14 +75,12 @@ function NavLink({ href, label, icon: Icon, comingSoon, isActive }: NavItem & { 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-
-  const supabase = useMemo(() => createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  ), []);
+  const supabase = getSupabaseBrowserClient();
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     router.push("/login");
   }
 

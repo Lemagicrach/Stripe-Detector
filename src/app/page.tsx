@@ -1,9 +1,5 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
   ArrowRight,
@@ -114,6 +110,27 @@ const faqs = [
   },
 ];
 
+type SearchParamValue = string | string[] | undefined;
+
+function buildQueryParams(params: Record<string, SearchParamValue>) {
+  const query = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === "string") {
+      if (value) query.append(key, value);
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (item) query.append(key, item);
+      }
+    }
+  }
+
+  return query;
+}
+
 function PreviewRow({
   amount,
   title,
@@ -148,16 +165,21 @@ function PreviewRow({
   );
 }
 
-export default function LandingPage() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const searchParams = useSearchParams();
-  const queryString = searchParams.toString();
-  const auditParams = new URLSearchParams(queryString);
+export default async function LandingPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, SearchParamValue>>;
+}) {
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const baseParams = buildQueryParams(resolvedSearchParams);
+  const auditParams = new URLSearchParams(baseParams);
   if (!auditParams.has("landing_variant")) {
     auditParams.set("landing_variant", "stripe-b2b-saas-audit");
   }
-  const auditHref = `/audit?${auditParams.toString()}`;
-  const demoHref = queryString ? `/demo?${queryString}` : "/demo";
+  const auditQuery = auditParams.toString();
+  const demoQuery = baseParams.toString();
+  const auditHref = auditQuery ? `/audit?${auditQuery}` : "/audit";
+  const demoHref = demoQuery ? `/demo?${demoQuery}` : "/demo";
 
   return (
     <main className="relative min-h-screen overflow-x-clip bg-[#0B0E11] text-[#E8ECF1]">
@@ -210,62 +232,49 @@ export default function LandingPage() {
             >
               Request free audit
             </Link>
-            <button
-              type="button"
-              onClick={() => setMobileOpen((value) => !value)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#1E2530] text-[#8B95A5] md:hidden"
-              aria-label="Toggle menu"
-            >
-              {mobileOpen ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 6L6 18M6 6l12 12" />
-                </svg>
-              ) : (
+            <details className="relative md:hidden">
+              <summary
+                className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-lg border border-[#1E2530] text-[#8B95A5] [&::-webkit-details-marker]:hidden"
+                aria-label="Toggle menu"
+              >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M3 12h18M3 6h18M3 18h18" />
                 </svg>
-              )}
-            </button>
+              </summary>
+
+              <div className="absolute right-0 top-[calc(100%+12px)] z-50 min-w-[240px] rounded-2xl border border-[#1E2530] bg-[#0B0E11] p-2 shadow-[0_18px_60px_rgba(0,0,0,0.45)]">
+                {[
+                  { href: "#fit", label: "Best Fit" },
+                  { href: "#audit", label: "Audit Scope" },
+                  { href: "#process", label: "Process" },
+                  { href: "#faq", label: "FAQ" },
+                ].map((item) => (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    className="block rounded-lg px-3 py-2.5 text-sm font-medium text-[#8B95A5] transition-colors hover:bg-[#12161B] hover:text-[#E8ECF1]"
+                  >
+                    {item.label}
+                  </a>
+                ))}
+                <div className="mt-2 grid gap-2 border-t border-[#1E2530] pt-3">
+                  <Link
+                    href={auditHref}
+                    className="rounded-lg bg-[#E8442A] px-4 py-2.5 text-center text-sm font-semibold text-white"
+                  >
+                    Request free audit
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="rounded-lg border border-[#1E2530] px-4 py-2.5 text-center text-sm font-medium text-[#8B95A5]"
+                  >
+                    Sign in
+                  </Link>
+                </div>
+              </div>
+            </details>
           </div>
         </div>
-
-        {mobileOpen && (
-          <div className="border-t border-[#1E2530] px-6 pb-5 pt-4 md:hidden">
-            <div className="mx-auto flex max-w-6xl flex-col gap-2">
-              {[
-                { href: "#fit", label: "Best Fit" },
-                { href: "#audit", label: "Audit Scope" },
-                { href: "#process", label: "Process" },
-                { href: "#faq", label: "FAQ" },
-              ].map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="rounded-lg px-3 py-2.5 text-sm font-medium text-[#8B95A5] transition-colors hover:bg-[#12161B] hover:text-[#E8ECF1]"
-                >
-                  {item.label}
-                </a>
-              ))}
-              <div className="mt-2 grid gap-2 border-t border-[#1E2530] pt-3">
-                <Link
-                  href={auditHref}
-                  onClick={() => setMobileOpen(false)}
-                  className="rounded-lg bg-[#E8442A] px-4 py-2.5 text-center text-sm font-semibold text-white"
-                >
-                  Request free audit
-                </Link>
-                <Link
-                  href="/login"
-                  onClick={() => setMobileOpen(false)}
-                  className="rounded-lg border border-[#1E2530] px-4 py-2.5 text-center text-sm font-medium text-[#8B95A5]"
-                >
-                  Sign in
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
       </nav>
 
       <section className="relative mx-auto grid max-w-6xl gap-12 px-6 pb-20 pt-20 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">

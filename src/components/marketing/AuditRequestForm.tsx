@@ -1,8 +1,8 @@
 "use client";
 
 import { type FormEvent, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowRight, Loader2 } from "lucide-react";
 
 type FormState = {
   name: string;
@@ -25,12 +25,12 @@ const INITIAL_FORM: FormState = {
 };
 
 export function AuditRequestForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [referrer, setReferrer] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     setReferrer(document.referrer || "");
@@ -63,36 +63,18 @@ export function AuditRequestForm() {
         }),
       });
 
-      const payload = (await response.json()) as { error?: string };
+      const payload = (await response.json()) as { error?: string; redirectTo?: string };
       if (!response.ok) {
         throw new Error(payload.error ?? "Failed to request audit");
       }
 
-      setSubmitted(true);
       setForm(INITIAL_FORM);
+      router.push(payload.redirectTo ?? "/audit/thanks");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Failed to request audit");
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  if (submitted) {
-    return (
-      <div className="rounded-[28px] border border-emerald-500/20 bg-emerald-500/8 p-6">
-        <div className="flex items-start gap-4">
-          <CheckCircle2 className="mt-0.5 h-8 w-8 text-emerald-300" />
-          <div>
-            <h3 className="text-xl font-semibold text-white">Audit request received</h3>
-            <p className="mt-3 text-sm leading-relaxed text-emerald-100/85">
-              We have your request. The next step is a short review of your Stripe setup,
-              revenue band, and the leak pattern you called out so we can respond with
-              the right audit angle.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
   }
 
   return (

@@ -12,6 +12,7 @@ const PAGE_LABELS: Record<string, string> = {
   "/dashboard/churn": "Churn",
   "/dashboard/recovery": "Recovery",
   "/dashboard/copilot": "AI Copilot",
+  "/dashboard/growth": "Growth Attribution",
   "/dashboard/alerts": "Alerts",
   "/dashboard/benchmarks": "Benchmarks",
   "/dashboard/scenarios": "Scenarios",

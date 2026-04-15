@@ -1,36 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { sendViaResend } from "@/lib/resend";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { badRequest, handleApiError, rateLimited } from "@/lib/server-error";
-
-const requestSchema = z.object({
-  name: z.string().trim().min(2).max(80),
-  workEmail: z.string().trim().email().max(160),
-  company: z.string().trim().min(2).max(120),
-  website: z.string().trim().max(200).optional().or(z.literal("")),
-  mrrBand: z.enum([
-    "under_10k",
-    "10k_to_25k",
-    "25k_to_50k",
-    "50k_to_100k",
-    "100k_plus",
-  ]),
-  billingModel: z.enum([
-    "b2b_saas_subscription",
-    "subscription_plus_usage",
-    "annual_contracts_in_stripe",
-    "not_sure",
-  ]),
-  biggestLeak: z.string().trim().min(20).max(1000),
-  utmSource: z.string().trim().max(80).optional().or(z.literal("")),
-  utmMedium: z.string().trim().max(80).optional().or(z.literal("")),
-  utmCampaign: z.string().trim().max(120).optional().or(z.literal("")),
-  utmTerm: z.string().trim().max(120).optional().or(z.literal("")),
-  utmContent: z.string().trim().max(120).optional().or(z.literal("")),
-  landingVariant: z.string().trim().max(80).optional().or(z.literal("")),
-  referrer: z.string().trim().max(500).optional().or(z.literal("")),
-});
+import { getSupabaseAdminClient } from "@/lib/server-clients";
+import {
+  auditRequestSchema,
+  formatAuditLabel,
+  getAuditThankYouHref,
+  type AuditRequestPayload,
+} from "@/lib/audit-requests";
 
 function getClientKey(request: NextRequest) {
   const forwardedFor = request.headers.get("x-forwarded-for");
@@ -47,21 +25,14 @@ function escapeHtml(value: string) {
     .replace(/'/g, "&#39;");
 }
 
-function formatLabel(value: string) {
-  return value
-    .split("_")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-function buildInternalRequestHtml(payload: z.infer<typeof requestSchema>) {
+function buildInternalRequestHtml(payload: AuditRequestPayload) {
   const rows = [
     ["Name", payload.name],
     ["Work email", payload.workEmail],
     ["Company", payload.company],
     ["Website", payload.website || "Not provided"],
-    ["MRR band", formatLabel(payload.mrrBand)],
-    ["Billing model", formatLabel(payload.billingModel)],
+    ["MRR band", formatAuditLabel(payload.mrrBand)],
+    ["Billing model", formatAuditLabel(payload.billingModel)],
     ["Landing variant", payload.landingVariant || "stripe-b2b-saas-audit"],
     ["UTM source", payload.utmSource || "-"],
     ["UTM medium", payload.utmMedium || "-"],
@@ -96,7 +67,7 @@ function buildInternalRequestHtml(payload: z.infer<typeof requestSchema>) {
 </html>`;
 }
 
-function buildConfirmationHtml(payload: z.infer<typeof requestSchema>) {
+function buildConfirmationHtml(payload: AuditRequestPayload) {
   return `<!DOCTYPE html>
 <html>
   <body style="font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a;padding:24px;">
@@ -132,18 +103,46 @@ export async function POST(request: NextRequest) {
     if (!allowed) return rateLimited();
 
     const rawBody = await request.json().catch(() => null);
-    const parsed = requestSchema.safeParse(rawBody);
+    const parsed = auditRequestSchema.safeParse(rawBody);
     if (!parsed.success) {
       return badRequest("Please complete all required fields with valid information.");
     }
 
     const payload = parsed.data;
     const inbox = process.env.AUDIT_INBOX_EMAIL || "support@corvidet.com";
+    const supabaseAdmin = getSupabaseAdminClient();
+    const userAgent = request.headers.get("user-agent")?.trim() || null;
 
-    await Promise.all([
+    const { data: insertedRequest, error: insertError } = await supabaseAdmin
+      .from("audit_requests")
+      .insert({
+        name: payload.name,
+        work_email: payload.workEmail,
+        company: payload.company,
+        website: payload.website || null,
+        mrr_band: payload.mrrBand,
+        billing_model: payload.billingModel,
+        biggest_leak: payload.biggestLeak,
+        landing_variant: payload.landingVariant || "stripe-b2b-saas-audit",
+        utm_source: payload.utmSource || null,
+        utm_medium: payload.utmMedium || null,
+        utm_campaign: payload.utmCampaign || null,
+        utm_term: payload.utmTerm || null,
+        utm_content: payload.utmContent || null,
+        referrer: payload.referrer || null,
+        user_agent: userAgent,
+      })
+      .select("id")
+      .single();
+
+    if (insertError) {
+      throw insertError;
+    }
+
+    const emailResults = await Promise.allSettled([
       sendViaResend({
         to: inbox,
-        subject: `Audit request: ${payload.company} (${formatLabel(payload.mrrBand)})`,
+        subject: `Audit request: ${payload.company} (${formatAuditLabel(payload.mrrBand)})`,
         html: buildInternalRequestHtml(payload),
       }),
       sendViaResend({
@@ -153,7 +152,17 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
-    return NextResponse.json({ ok: true });
+    const emailDeliveryOk = emailResults.every((result) => result.status === "fulfilled");
+    if (!emailDeliveryOk) {
+      console.error("AUDIT_REQUEST_EMAIL", emailResults);
+    }
+
+    return NextResponse.json({
+      ok: true,
+      requestId: insertedRequest.id,
+      redirectTo: getAuditThankYouHref(payload),
+      emailDeliveryOk,
+    });
   } catch (error) {
     return handleApiError(error, "AUDIT_REQUEST");
   }

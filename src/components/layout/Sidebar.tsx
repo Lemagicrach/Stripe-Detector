@@ -14,6 +14,7 @@ import {
   FileText,
   FlaskConical,
   CreditCard,
+  Megaphone,
   Link2,
   Settings,
   LogOut,
@@ -41,6 +42,7 @@ const mainNav: NavItem[] = [
 ];
 
 const insightsNav: NavItem[] = [
+  { href: "/dashboard/growth", label: "Growth", icon: Megaphone },
   { href: "/dashboard/alerts", label: "Alerts", icon: Bell, comingSoon: true },
   { href: "/dashboard/benchmarks", label: "Benchmarks", icon: BarChart2, comingSoon: true },
   { href: "/dashboard/scenarios", label: "Scenarios", icon: FlaskConical, comingSoon: true },

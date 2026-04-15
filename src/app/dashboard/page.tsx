@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, TrendingUp, Sparkles, ArrowRight, RefreshCw, Zap } from "lucide-react";
+import { AlertTriangle, TrendingUp, Sparkles, ArrowRight, RefreshCw, Zap, FileText } from "lucide-react";
+import { MonthlyRevenueCard } from "@/components/reports/MonthlyRevenueCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import type { MonthlyRevenueHealthReport } from "@/types/reports";
 
 type Leak = {
   id: string;
@@ -24,6 +26,11 @@ type PulseData = {
   totalRecoverable: number;
   topLeaks: Leak[];
   hasConnection: boolean;
+  latestMonthlyReport: MonthlyRevenueHealthReport | null;
+};
+
+type ReportsPreview = {
+  reports?: MonthlyRevenueHealthReport[];
 };
 
 function HealthRing({ score }: { score: number }) {
@@ -88,9 +95,20 @@ export default function DashboardHome() {
   useEffect(() => {
     async function load() {
       try {
-        const [metricsRes, leaksRes] = await Promise.all([
+        const latestReportPromise = fetch("/api/reports/monthly-health?limit=1", {
+          cache: "no-store",
+        })
+          .then(async (response) => {
+            if (!response.ok) return null;
+            const payload = (await response.json()) as ReportsPreview;
+            return payload.reports?.[0] ?? null;
+          })
+          .catch(() => null);
+
+        const [metricsRes, leaksRes, latestMonthlyReport] = await Promise.all([
           fetch("/api/metrics", { cache: "no-store" }),
           fetch("/api/leaks/connections", { cache: "no-store" }),
+          latestReportPromise,
         ]);
         const metrics = await metricsRes.json();
         const leaks = await leaksRes.json();
@@ -104,9 +122,18 @@ export default function DashboardHome() {
           totalRecoverable,
           topLeaks,
           hasConnection: !!metrics.current,
+          latestMonthlyReport,
         });
       } catch {
-        setData({ leakScore: 0, mrr: 0, totalLost: 0, totalRecoverable: 0, topLeaks: [], hasConnection: false });
+        setData({
+          leakScore: 0,
+          mrr: 0,
+          totalLost: 0,
+          totalRecoverable: 0,
+          topLeaks: [],
+          hasConnection: false,
+          latestMonthlyReport: null,
+        });
       } finally {
         setLoading(false);
       }
@@ -179,6 +206,30 @@ export default function DashboardHome() {
           <p className="mt-1 text-xs text-emerald-400/60">With quick action today</p>
         </Card>
       </div>
+
+      {data.latestMonthlyReport ? (
+        <MonthlyRevenueCard
+          report={data.latestMonthlyReport}
+          href={`/dashboard/reports/${data.latestMonthlyReport.reportId}`}
+        />
+      ) : (
+        <Card className="border-dashed border-gray-700 bg-gray-900/60">
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle className="text-base">Monthly revenue health</CardTitle>
+              <p className="mt-1 text-sm text-gray-400">
+                No stored month-end snapshot yet. Generate one to benchmark churn and payment risk.
+              </p>
+            </div>
+            <Button variant="outline" asChild size="sm">
+              <Link href="/dashboard/reports">
+                Open reports
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+        </Card>
+      )}
 
       {/* Critical leaks alert */}
       {criticalLeaks.length > 0 && (
@@ -255,10 +306,11 @@ export default function DashboardHome() {
       </Card>
 
       {/* Quick actions */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
           { href: "/dashboard/leaks", iconName: "alert", title: "Scan for leaks", sub: "Run full analysis" },
           { href: "/dashboard/metrics", iconName: "trending", title: "View metrics", sub: "MRR, churn, NRR" },
+          { href: "/dashboard/reports", iconName: "report", title: "Monthly reports", sub: "Store month-end health" },
           { href: "/dashboard/copilot", iconName: "sparkles", title: "Ask AI Copilot", sub: "Revenue insights" },
         ].map(({ href, iconName, title, sub }) => (
           <Link
@@ -272,11 +324,14 @@ export default function DashboardHome() {
                   ? "bg-red-500/10"
                   : iconName === "trending"
                   ? "bg-blue-500/10"
+                  : iconName === "report"
+                  ? "bg-emerald-500/10"
                   : "bg-purple-500/10"
               }`}
             >
               {iconName === "alert" && <AlertTriangle className="h-5 w-5 text-red-400" />}
               {iconName === "trending" && <TrendingUp className="h-5 w-5 text-blue-400" />}
+              {iconName === "report" && <FileText className="h-5 w-5 text-emerald-400" />}
               {iconName === "sparkles" && <Sparkles className="h-5 w-5 text-purple-400" />}
             </div>
             <div className="flex-1">

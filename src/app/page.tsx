@@ -1,247 +1,203 @@
 "use client";
+
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import {
+  AlertTriangle,
+  ArrowRight,
+  BadgeCheck,
+  ChartNoAxesColumnIncreasing,
+  CreditCard,
+  Mail,
+  Radar,
+  Search,
+  ShieldCheck,
+  TrendingDown,
+  Users,
+} from "lucide-react";
 
-// ── Data ─────────────────────────────────────────────────────────────────────
-
-const tickerLeaks = [
+const proofPoints = [
   {
-    icon: "💳",
-    type: "Failed payment - no retry",
-    desc: "Card declined 3 days ago, no dunning email sent",
-    amount: "−$149/mo",
-    color: "red" as const,
+    value: "15 min",
+    label: "to identify the first leak pattern",
+    detail: "Manual audit workflow designed for Stripe-native B2B SaaS teams.",
   },
   {
-    icon: "⏱️",
-    type: "Trial expired - no conversion nudge",
-    desc: "14-day trial ended, customer never contacted",
-    amount: "−$79/mo",
-    color: "yellow" as const,
+    value: "$10k-$100k",
+    label: "best-fit MRR band",
+    detail: "Enough subscription volume to have leakage, small enough to move fast.",
   },
   {
-    icon: "💳",
-    type: 'Subscription stuck in "past_due"',
-    desc: "Active user, payment failed 12 days ago, still using product",
-    amount: "−$299/mo",
-    color: "red" as const,
-  },
-  {
-    icon: "📉",
-    type: "Cancellation wave detected",
-    desc: "4 cancellations in 48 h from same pricing tier",
-    amount: "−$596/mo",
-    color: "yellow" as const,
+    value: "3",
+    label: "high-signal leak categories",
+    detail: "Failed renewals, broken subscription states, and silent churn triggers.",
   },
 ];
 
-const stats = [
+const auditFindings = [
   {
-    number: "9%",
-    title: "Lost to failed payments",
-    desc: "The average SaaS loses 9% of MRR monthly to involuntary churn from card failures that never get resolved.",
+    icon: CreditCard,
+    title: "Failed renewals nobody recovered",
+    description:
+      "Invoices that failed, never got a real retry path, and quietly turned into involuntary churn.",
   },
   {
-    number: "23%",
-    title: "Trials that vanish",
-    desc: "Nearly 1 in 4 trials expire without any follow-up. These are people who already showed intent.",
+    icon: AlertTriangle,
+    title: "Broken subscription states",
+    description:
+      "Past-due, unpaid, or incomplete subscriptions still tied to active product access or live customer accounts.",
   },
   {
-    number: "$0",
-    title: "Recovered by default",
-    desc: "Stripe's built-in retry logic is minimal. Without active recovery, failed payments stay failed.",
-  },
-];
-
-const steps = [
-  {
-    num: "01",
-    title: "Connect Stripe",
-    desc: "OAuth with read-only permissions. We never touch your API keys or modify any data.",
-    time: "30 seconds",
+    icon: TrendingDown,
+    title: "Silent churn precursors",
+    description:
+      "Cancellation clusters, expiring cards, and downgrade behavior that usually shows up before MRR drops.",
   },
   {
-    num: "02",
-    title: "We scan everything",
-    desc: "Failed payments, stuck subscriptions, trial drop-offs, churn velocity, pricing anomalies - every signal that points to money leaving your account.",
-    time: "2-4 minutes",
-  },
-  {
-    num: "03",
-    title: "Get your leak report",
-    desc: "A clear breakdown of what's leaking, how much it's costing you, and exactly what to fix - ranked by dollar impact.",
-    time: undefined,
-  },
-  {
-    num: "04",
-    title: "Monitor continuously",
-    desc: "New leaks get flagged in real time. Alerts when churn spikes, payments fail in clusters, or a high-value customer goes quiet.",
-    time: undefined,
+    icon: Radar,
+    title: "Billing flow gaps",
+    description:
+      "Missing dunning, weak save sequences, and billing ops issues that a dashboard never calls out directly.",
   },
 ];
 
-const leakTypes = [
-  {
-    icon: "💳",
-    title: "Failed payments without recovery",
-    desc: "Declined cards with no retry schedule or dunning email. Revenue that just disappears.",
-    stat: "Avg. recoverable: $380/mo per SaaS",
-  },
-  {
-    icon: "⚠️",
-    title: "Subscriptions stuck in limbo",
-    desc: 'Past-due, incomplete, or "active" subscriptions where the customer stopped paying weeks ago.',
-    stat: "Found in 68% of scanned accounts",
-  },
-  {
-    icon: "📉",
-    title: "Silent churn patterns",
-    desc: "Clusters of cancellations from the same plan, cohort, or time period that signal a deeper problem.",
-    stat: "Detected 14 days before it hits MRR",
-  },
-  {
-    icon: "🔔",
-    title: "Trial-to-paid drop-offs",
-    desc: "Trials that expire without a conversion email, payment method prompt, or any engagement signal.",
-    stat: "23% avg. trial abandonment rate",
-  },
-  {
-    icon: "🏷️",
-    title: "Pricing misconfigurations",
-    desc: "Coupons that never expire, legacy plans with outdated pricing, customers grandfathered below cost.",
-    stat: "Avg. $200/mo in underpriced subs",
-  },
-  {
-    icon: "🤖",
-    title: "AI-powered diagnostics",
-    desc: "Ask questions in plain English about any metric. Get answers with context, not just numbers.",
-    stat: "Powered by real-time Stripe data",
-  },
+const fitChecks = [
+  "B2B SaaS with recurring subscription revenue in Stripe Billing",
+  "Founder, operator, or finance owner without dedicated RevOps coverage",
+  "Roughly $10k-$100k MRR and enough volume for leakage to matter",
+  "Need a concrete audit and fix list, not another generic analytics chart",
 ];
 
-const vsRows: {
-  feature: string;
-  Corvidet: boolean | string;
-  chartmogul: boolean | string;
-  baremetrics: boolean | string;
-}[] = [
-  { feature: "Revenue leak detection",   Corvidet: true,      chartmogul: false,    baremetrics: false },
-  { feature: "Leak $ impact scoring",    Corvidet: true,      chartmogul: false,    baremetrics: false },
-  { feature: "Real-time churn alerts",   Corvidet: true,      chartmogul: false,    baremetrics: true  },
-  { feature: "MRR / ARR / churn tracking", Corvidet: true,    chartmogul: true,     baremetrics: true  },
-  { feature: "AI Q&A on metrics",        Corvidet: true,      chartmogul: false,    baremetrics: false },
-  { feature: "Free tier",               Corvidet: "<$10K",   chartmogul: "<$10K",  baremetrics: "$108/mo" },
-  { feature: "Setup time",              Corvidet: "5 min",   chartmogul: "10 min", baremetrics: "10 min" },
-];
-
-const plans = [
+const processSteps = [
   {
-    tag: "Free",
-    name: "Starter",
-    price: "$0",
-    note: "/mo",
-    subNote: "Under $10K MRR",
-    features: ["Full leak scan", "MRR, churn, revenue tracking", "5 AI queries/month", "30-day data retention"],
-    cta: "Start for free →",
-    href: "/login",
-    featured: false,
+    step: "01",
+    title: "Request the audit",
+    detail:
+      "Tell us who you are, what you sell, and where you think revenue is slipping.",
   },
   {
-    tag: "Most popular",
-    name: "Growth",
-    price: "$29",
-    note: "/mo",
-    subNote: "Up to $100K MRR",
-    features: ["Continuous leak monitoring", "Real-time churn alerts", "50 AI queries/month", "1-year data retention", "Email support"],
-    cta: "Start 14-day trial →",
-    href: "/login",
-    featured: true,
+    step: "02",
+    title: "We review your Stripe leakage pattern",
+    detail:
+      "We focus on failed payments, broken subscription states, and the highest-signal retention gaps.",
   },
   {
-    tag: "Scale",
-    name: "Business",
-    price: "$99",
-    note: "/mo",
-    subNote: "Up to $500K MRR",
-    features: ["Everything in Growth", "200 AI queries/month", "Custom leak reports", "Unlimited retention", "Priority support"],
-    cta: "Start 14-day trial",
-    href: "/login",
-    featured: false,
+    step: "03",
+    title: "You get a prioritized action plan",
+    detail:
+      "Not a vanity report. A list of what is likely leaking, what to fix first, and what that means for MRR.",
   },
 ];
 
 const faqs = [
   {
-    q: 'What exactly is a "revenue leak"?',
-    a: "Any revenue you should be collecting but aren't - failed payments without retry, expired trials without follow-up, subscriptions stuck in broken states, or pricing errors that undercharge customers.",
+    question: "Who is this audit for?",
+    answer:
+      "Stripe-native B2B SaaS teams with subscription revenue and no appetite for another broad analytics tool evaluation.",
   },
   {
-    q: "How is this different from Stripe's dashboard?",
-    a: "Stripe shows you what happened. Corvidet shows you what's going wrong - silently. We surface the patterns, anomalies, and broken flows that don't show up in a revenue chart.",
+    question: "Is this a free consultation or a product demo?",
+    answer:
+      "It is a free revenue leak audit request. If there is a real fit, the audit naturally leads into Corvidet.",
   },
   {
-    q: "Is my Stripe data safe?",
-    a: "We connect via OAuth with read-only access. We never see your API keys, never modify your data, and you can disconnect in one click at any time.",
+    question: "What if I am earlier than $10k MRR?",
+    answer:
+      "You can still use the product, but campaign-wise the strongest fit is the band where leakage has real dollar weight and fixes are still fast to ship.",
   },
   {
-    q: "I'm already using ChartMogul / Baremetrics",
-    a: "Corvidet doesn't replace your analytics dashboard - it complements it. Those tools show metrics. We find the problems hiding inside those metrics. Many users run both.",
-  },
-  {
-    q: "How fast does it work?",
-    a: "Connect Stripe, and your first leak report is ready in under 5 minutes. Continuous monitoring starts immediately after.",
-  },
-  {
-    q: "What if no leaks are found?",
-    a: "Then you're running a tight ship and the scan cost you nothing. But in 90%+ of accounts we scan, we find recoverable revenue.",
+    question: "Why not just send people to the live demo?",
+    answer:
+      "Cold traffic converts better on a specific operational promise than on a general product tour. The demo stays available as secondary proof.",
   },
 ];
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+function PreviewRow({
+  amount,
+  title,
+  detail,
+  tone,
+}: {
+  amount: string;
+  title: string;
+  detail: string;
+  tone: "red" | "amber" | "blue";
+}) {
+  const toneStyles =
+    tone === "red"
+      ? "border-red-500/20 bg-red-500/8 text-red-200"
+      : tone === "amber"
+      ? "border-amber-500/20 bg-amber-500/8 text-amber-100"
+      : "border-blue-500/20 bg-blue-500/8 text-blue-100";
 
-function VsCell({ value }: { value: boolean | string }) {
-  if (value === true)  return <td className="px-4 py-3.5 text-center text-sm font-semibold text-[#2ECC71]">✓</td>;
-  if (value === false) return <td className="px-4 py-3.5 text-center text-sm text-[#5A6575]">✕</td>;
-  return <td className="px-4 py-3.5 text-center text-sm text-[#8B95A5]">{value}</td>;
+  return (
+    <div className={`rounded-2xl border p-4 ${toneStyles}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-[0.12em] text-white/55">Potential leak</p>
+          <p className="mt-2 text-base font-semibold text-white">{title}</p>
+          <p className="mt-1 text-sm leading-relaxed text-white/70">{detail}</p>
+        </div>
+        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono text-sm text-white">
+          {amount}
+        </span>
+      </div>
+    </div>
+  );
 }
-
-// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const queryString = searchParams.toString();
+  const auditParams = new URLSearchParams(queryString);
+  if (!auditParams.has("landing_variant")) {
+    auditParams.set("landing_variant", "stripe-b2b-saas-audit");
+  }
+  const auditHref = `/audit?${auditParams.toString()}`;
+  const demoHref = queryString ? `/demo?${queryString}` : "/demo";
 
   return (
     <main className="relative min-h-screen overflow-x-clip bg-[#0B0E11] text-[#E8ECF1]">
-      {/* Background orbs */}
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="orb orb-a" />
         <div className="orb orb-b" />
       </div>
 
-      {/* ── NAV ── */}
       <nav className="sticky top-0 z-50 border-b border-[#1E2530] bg-[#0B0E11]/85 backdrop-blur-xl">
-        <div className="flex items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2.5">
-            <img
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <Link href="/" className="flex items-center gap-3">
+            <Image
               src="/Modern Logo with Geometric Crow and Teal Accents.png"
               alt="Corvidet"
-              width={36}
-              height={36}
-              className="rounded-lg object-contain"
+              width={38}
+              height={38}
+              className="rounded-xl"
             />
-            <span className="text-[17px] font-bold tracking-tight text-[#E8ECF1]">Corvidet</span>
+            <div>
+              <p className="text-[17px] font-bold tracking-tight text-[#E8ECF1]">Corvidet</p>
+              <p className="text-xs text-[#5A6575]">Stripe revenue leak audits</p>
+            </div>
           </Link>
 
-          {/* Desktop links */}
-          <div className="hidden items-center gap-8 sm:flex">
-            <a href="#how"     className="text-sm font-medium text-[#8B95A5] transition-colors hover:text-[#E8ECF1]">How it works</a>
-            <a href="#leaks"   className="text-sm font-medium text-[#8B95A5] transition-colors hover:text-[#E8ECF1]">What we find</a>
-            <a href="#pricing" className="text-sm font-medium text-[#8B95A5] transition-colors hover:text-[#E8ECF1]">Pricing</a>
-            <a href="#faq"     className="text-sm font-medium text-[#8B95A5] transition-colors hover:text-[#E8ECF1]">FAQ</a>
+          <div className="hidden items-center gap-8 md:flex">
+            <a href="#fit" className="text-sm font-medium text-[#8B95A5] transition-colors hover:text-[#E8ECF1]">
+              Best Fit
+            </a>
+            <a href="#audit" className="text-sm font-medium text-[#8B95A5] transition-colors hover:text-[#E8ECF1]">
+              Audit Scope
+            </a>
+            <a href="#process" className="text-sm font-medium text-[#8B95A5] transition-colors hover:text-[#E8ECF1]">
+              Process
+            </a>
+            <a href="#faq" className="text-sm font-medium text-[#8B95A5] transition-colors hover:text-[#E8ECF1]">
+              FAQ
+            </a>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Desktop CTAs */}
             <Link
               href="/login"
               className="hidden rounded-lg border border-[#1E2530] px-4 py-2 text-sm font-medium text-[#8B95A5] transition-colors hover:border-[#2A3444] hover:text-[#E8ECF1] sm:inline-flex"
@@ -249,53 +205,62 @@ export default function LandingPage() {
               Sign in
             </Link>
             <Link
-              href="/login"
-              className="hidden rounded-lg bg-[#E8442A] px-4 py-2 text-sm font-semibold text-white transition-all hover:brightness-110 hover:-translate-y-px sm:inline-flex"
+              href={auditHref}
+              className="hidden rounded-lg bg-[#E8442A] px-4 py-2 text-sm font-semibold text-white transition-all hover:-translate-y-px hover:brightness-110 sm:inline-flex"
             >
-              Get started free
+              Request free audit
             </Link>
-
-            {/* Mobile hamburger */}
             <button
               type="button"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#1E2530] text-[#8B95A5] sm:hidden"
+              onClick={() => setMobileOpen((value) => !value)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#1E2530] text-[#8B95A5] md:hidden"
               aria-label="Toggle menu"
             >
               {mobileOpen ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
               ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 12h18M3 6h18M3 18h18" />
+                </svg>
               )}
             </button>
           </div>
         </div>
 
-        {/* Mobile menu */}
         {mobileOpen && (
-          <div className="border-t border-[#1E2530] px-6 pb-5 pt-4 sm:hidden">
-            <div className="flex flex-col gap-1">
+          <div className="border-t border-[#1E2530] px-6 pb-5 pt-4 md:hidden">
+            <div className="mx-auto flex max-w-6xl flex-col gap-2">
               {[
-                { href: "#how",     label: "How it works" },
-                { href: "#leaks",   label: "What we find" },
-                { href: "#pricing", label: "Pricing" },
-                { href: "#faq",     label: "FAQ" },
-              ].map(({ href, label }) => (
+                { href: "#fit", label: "Best Fit" },
+                { href: "#audit", label: "Audit Scope" },
+                { href: "#process", label: "Process" },
+                { href: "#faq", label: "FAQ" },
+              ].map((item) => (
                 <a
-                  key={href}
-                  href={href}
+                  key={item.href}
+                  href={item.href}
                   onClick={() => setMobileOpen(false)}
                   className="rounded-lg px-3 py-2.5 text-sm font-medium text-[#8B95A5] transition-colors hover:bg-[#12161B] hover:text-[#E8ECF1]"
                 >
-                  {label}
+                  {item.label}
                 </a>
               ))}
-              <div className="mt-3 flex flex-col gap-2 border-t border-[#1E2530] pt-3">
-                <Link href="/login" onClick={() => setMobileOpen(false)} className="rounded-lg border border-[#1E2530] px-4 py-2.5 text-center text-sm font-medium text-[#8B95A5]">
-                  Sign in
+              <div className="mt-2 grid gap-2 border-t border-[#1E2530] pt-3">
+                <Link
+                  href={auditHref}
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-lg bg-[#E8442A] px-4 py-2.5 text-center text-sm font-semibold text-white"
+                >
+                  Request free audit
                 </Link>
-                <Link href="/login" onClick={() => setMobileOpen(false)} className="rounded-lg bg-[#E8442A] px-4 py-2.5 text-center text-sm font-semibold text-white">
-                  Get started free
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-lg border border-[#1E2530] px-4 py-2.5 text-center text-sm font-medium text-[#8B95A5]"
+                >
+                  Sign in
                 </Link>
               </div>
             </div>
@@ -303,288 +268,276 @@ export default function LandingPage() {
         )}
       </nav>
 
-      {/* ── HERO ── */}
-      <section className="relative mx-auto max-w-[860px] px-6 pb-16 pt-24 text-center">
-        {/* Radial glow */}
-        <div aria-hidden className="hero-glow" />
-
+      <section className="relative mx-auto grid max-w-6xl gap-12 px-6 pb-20 pt-20 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
         <div className="fade-up relative">
-          <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#E8442A]/25 bg-[#E8442A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#E8442A]">
+          <div aria-hidden className="hero-glow" />
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#E8442A]/25 bg-[#E8442A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#E8442A]">
             <span className="badge-pulse h-1.5 w-1.5 rounded-full bg-[#E8442A]" />
-            Revenue leak scanner for Stripe SaaS
+            Free Stripe revenue leak audit for B2B SaaS
           </span>
-        </div>
 
-        <h1 className="fade-up delay-1 mt-4 text-[clamp(36px,5.5vw,58px)] font-bold leading-[1.1] tracking-[-0.03em]">
-          Your Stripe account is{" "}
-          <span
-            className="bg-gradient-to-br from-[#E8442A] to-[#FF6B4A] bg-clip-text text-transparent"
-          >
-            leaking revenue.
-          </span>
-          <br />Corvidet finds it.
-        </h1>
+          <h1 className="mt-6 text-[clamp(38px,6vw,64px)] font-bold leading-[1.02] tracking-[-0.04em] text-white">
+            Find the MRR your
+            <span className="bg-gradient-to-br from-[#E8442A] to-[#FF6B4A] bg-clip-text text-transparent">
+              {" "}Stripe Billing setup is quietly losing.
+            </span>
+          </h1>
 
-        <p className="fade-up delay-2 mx-auto mt-5 max-w-[560px] text-[17px] leading-relaxed text-[#8B95A5]">
-          Failed payments nobody follows up on. Subscriptions stuck in limbo. Churn patterns you don&apos;t see until it&apos;s too late.
-          Connect your Stripe and get a leak report in under 5 minutes.
-        </p>
+          <p className="mt-6 max-w-[620px] text-[18px] leading-relaxed text-[#8B95A5]">
+            Corvidet is best for Stripe-native B2B SaaS founders and operators between
+            {" "}$10k and $100k MRR who need a concrete leak audit, not another generic
+            analytics dashboard.
+          </p>
 
-        <div className="fade-up delay-2 mt-8 flex flex-wrap justify-center gap-3">
-          <Link
-            href="/demo"
-            className="inline-flex items-center gap-2 rounded-lg bg-[#E8442A] px-5 py-3 text-[15px] font-semibold text-white transition-all hover:brightness-110 hover:-translate-y-px"
-          >
-            Run live demo scan →
-          </Link>
-          <a
-            href="#how"
-            className="inline-flex items-center gap-2 rounded-lg border border-[#1E2530] px-5 py-3 text-[15px] font-medium text-[#8B95A5] transition-all hover:border-[#2A3444] hover:text-[#E8ECF1]"
-          >
-            See what we detect
-          </a>
-        </div>
-
-        <p className="fade-up delay-3 mt-5 text-xs text-[#5A6575]">
-          Read-only access · Free under $10K MRR · Disconnect anytime
-        </p>
-      </section>
-
-      {/* ── LEAK TICKER ── */}
-      <section className="mx-auto max-w-[700px] px-6 pb-20">
-        <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.1em] text-[#5A6575]">
-          Example leaks we detect in Stripe accounts
-        </p>
-        <div className="space-y-2">
-          {tickerLeaks.map((leak, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between rounded-xl border border-[#1E2530] bg-[#12161B] px-5 py-4 transition-colors hover:border-[#2A3444]"
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href={auditHref}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#E8442A] px-5 py-3 text-[15px] font-semibold text-white transition-all hover:-translate-y-px hover:brightness-110"
             >
-              <div className="flex items-center gap-3">
-                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-base ${
-                  leak.color === "red" ? "bg-[#E8442A]/10" : "bg-[#F0B832]/10"
-                }`}>
-                  {leak.icon}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[#E8ECF1]">{leak.type}</p>
-                  <p className="text-xs text-[#5A6575]">{leak.desc}</p>
-                </div>
+              Request free audit
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href={demoHref}
+              className="inline-flex items-center gap-2 rounded-xl border border-[#1E2530] px-5 py-3 text-[15px] font-medium text-[#8B95A5] transition-all hover:border-[#2A3444] hover:text-[#E8ECF1]"
+            >
+              View live demo
+            </Link>
+          </div>
+
+          <div className="mt-8 flex flex-wrap gap-3 text-sm text-[#5A6575]">
+            <span className="rounded-full border border-[#1E2530] bg-[#12161B] px-3 py-1.5">
+              Read-only Stripe access
+            </span>
+            <span className="rounded-full border border-[#1E2530] bg-[#12161B] px-3 py-1.5">
+              Prioritized action plan
+            </span>
+            <span className="rounded-full border border-[#1E2530] bg-[#12161B] px-3 py-1.5">
+              Ideal for lean SaaS teams
+            </span>
+          </div>
+        </div>
+
+        <div className="fade-up delay-1 rounded-[28px] border border-[#1E2530] bg-[#12161B]/90 p-6 shadow-[0_30px_100px_rgba(0,0,0,0.35)]">
+          <div className="flex items-center justify-between gap-4 border-b border-[#1E2530] pb-5">
+            <div>
+              <p className="text-xs uppercase tracking-[0.16em] text-[#5A6575]">Audit preview</p>
+              <h2 className="mt-2 text-xl font-semibold text-white">What a strong-fit account usually surfaces</h2>
+            </div>
+            <ShieldCheck className="h-10 w-10 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-2 text-emerald-300" />
+          </div>
+
+          <div className="mt-5 space-y-4">
+            <PreviewRow
+              amount="$2.8k/mo"
+              title="Failed renewals with no real recovery path"
+              detail="Retry logic exists, but billing follow-up and save messaging are weak or missing."
+              tone="red"
+            />
+            <PreviewRow
+              amount="$1.1k/mo"
+              title="Past-due subscriptions still tied to live access"
+              detail="Billing status and product entitlement are out of sync, so churn hides in operations."
+              tone="amber"
+            />
+            <PreviewRow
+              amount="14 days"
+              title="Silent churn pattern before the dashboard shows it"
+              detail="Expiring cards, cancellations, and downgrade behavior cluster before headline MRR moves."
+              tone="blue"
+            />
+          </div>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            {proofPoints.map((point) => (
+              <div key={point.label} className="rounded-2xl border border-[#1E2530] bg-[#0E1217] p-4">
+                <p className="font-mono text-2xl font-bold text-white">{point.value}</p>
+                <p className="mt-2 text-sm font-medium text-[#E8ECF1]">{point.label}</p>
+                <p className="mt-2 text-xs leading-relaxed text-[#5A6575]">{point.detail}</p>
               </div>
-              <span className={`shrink-0 font-mono text-sm font-semibold ${
-                leak.color === "red" ? "text-[#E8442A]" : "text-[#F0B832]"
-              }`}>
-                {leak.amount}
-              </span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ── PROBLEM STATS ── */}
-      <section className="mx-auto max-w-5xl px-6 py-20">
-        <div className="mb-12 text-center">
-          <h2 className="text-[clamp(26px,3.5vw,38px)] font-bold tracking-[-0.02em]">The leaks nobody talks about</h2>
-          <p className="mt-3 text-[#8B95A5]">Stripe shows you revenue. It doesn&apos;t show you what you&apos;re silently losing every month.</p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {stats.map((s, i) => (
-            <div
-              key={s.title}
-              className={`fade-up delay-${i + 1} rounded-xl border border-[#1E2530] bg-[#12161B] p-7 transition-all hover:border-[#2A3444] hover:bg-[#181D24]`}
-            >
-              <p className="font-mono text-4xl font-bold text-[#E8442A]">{s.number}</p>
-              <h3 className="mt-3 text-base font-semibold">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[#8B95A5]">{s.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ── */}
-      <section id="how" className="mx-auto max-w-[780px] px-6 py-20">
-        <div className="mb-12 text-center">
-          <h2 className="text-[clamp(26px,3.5vw,38px)] font-bold tracking-[-0.02em]">
-            From connected to leak report in 5 minutes
+      <section id="fit" className="mx-auto max-w-6xl px-6 py-20">
+        <div className="mb-12 max-w-3xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#E8442A]">Best fit</p>
+          <h2 className="mt-4 text-[clamp(28px,4vw,42px)] font-bold tracking-[-0.03em] text-white">
+            Campaign to the operator who already feels the billing pain.
           </h2>
-          <p className="mt-3 text-[#8B95A5]">No code. No spreadsheets. No 45-minute onboarding calls.</p>
+          <p className="mt-4 text-base leading-relaxed text-[#8B95A5]">
+            This is not for every Stripe account. It is for the SaaS team that knows
+            revenue is slipping somewhere in billing, but does not yet have a clear,
+            prioritized explanation for where.
+          </p>
         </div>
-        <div className="divide-y divide-[#1E2530]">
-          {steps.map((step) => (
-            <div key={step.num} className="grid grid-cols-[56px_1fr] gap-5 py-8">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#1E2530] bg-[#12161B] font-mono text-base font-semibold text-[#5A6575]">
-                {step.num}
+
+        <div className="grid gap-4 lg:grid-cols-[1fr_1.1fr]">
+          <div className="rounded-[26px] border border-[#1E2530] bg-[#12161B] p-7">
+            <div className="flex items-center gap-3">
+              <Users className="h-10 w-10 rounded-2xl border border-[#1E2530] bg-[#0E1217] p-2 text-[#E8442A]" />
+              <div>
+                <h3 className="text-lg font-semibold text-white">Who should request the audit</h3>
+                <p className="text-sm text-[#5A6575]">Founder, COO, finance lead, or growth operator</p>
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              {fitChecks.map((item) => (
+                <div key={item} className="flex items-start gap-3 rounded-2xl border border-[#1E2530] bg-[#0E1217] px-4 py-3">
+                  <BadgeCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
+                  <p className="text-sm leading-relaxed text-[#C3CBD6]">{item}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {auditFindings.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.title} className="rounded-[24px] border border-[#1E2530] bg-[#12161B] p-6 transition-colors hover:border-[#2A3444]">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#1E2530] bg-[#0E1217]">
+                    <Icon className="h-5 w-5 text-[#E8442A]" />
+                  </div>
+                  <h3 className="mt-5 text-lg font-semibold text-white">{item.title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-[#8B95A5]">{item.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section id="audit" className="mx-auto max-w-6xl px-6 py-20">
+        <div className="mb-12 max-w-3xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#E8442A]">Audit scope</p>
+          <h2 className="mt-4 text-[clamp(28px,4vw,42px)] font-bold tracking-[-0.03em] text-white">
+            One clear operational promise beats a broad product pitch.
+          </h2>
+          <p className="mt-4 text-base leading-relaxed text-[#8B95A5]">
+            The campaign offer is simple: request a Stripe revenue leak audit and get a
+            high-signal read on billing leakage, subscription breakage, and the first fixes
+            worth shipping.
+          </p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-[24px] border border-[#1E2530] bg-[#12161B] p-6">
+            <Search className="h-9 w-9 text-[#E8442A]" />
+            <h3 className="mt-5 text-lg font-semibold text-white">What we inspect</h3>
+            <p className="mt-3 text-sm leading-relaxed text-[#8B95A5]">
+              Failed invoices, dunning gaps, broken subscription states, card expiry patterns,
+              and early churn signals tied to billing operations.
+            </p>
+          </div>
+          <div className="rounded-[24px] border border-[#1E2530] bg-[#12161B] p-6">
+            <Mail className="h-9 w-9 text-[#E8442A]" />
+            <h3 className="mt-5 text-lg font-semibold text-white">What you receive</h3>
+            <p className="mt-3 text-sm leading-relaxed text-[#8B95A5]">
+              A concise action plan with the highest-value leak category, why it matters,
+              and the first workflow or messaging fix to test.
+            </p>
+          </div>
+          <div className="rounded-[24px] border border-[#1E2530] bg-[#12161B] p-6">
+            <ChartNoAxesColumnIncreasing className="h-9 w-9 text-[#E8442A]" />
+            <h3 className="mt-5 text-lg font-semibold text-white">What this is not</h3>
+            <p className="mt-3 text-sm leading-relaxed text-[#8B95A5]">
+              Not another generic BI dashboard, not a month-long consulting engagement,
+              and not a random AI summary without operational context.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="process" className="mx-auto max-w-5xl px-6 py-20">
+        <div className="mb-12 text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#E8442A]">Process</p>
+          <h2 className="mt-4 text-[clamp(28px,4vw,42px)] font-bold tracking-[-0.03em] text-white">
+            A campaign flow your ICP can say yes to quickly.
+          </h2>
+        </div>
+
+        <div className="divide-y divide-[#1E2530] rounded-[28px] border border-[#1E2530] bg-[#12161B] px-6">
+          {processSteps.map((step) => (
+            <div key={step.step} className="grid gap-5 py-7 md:grid-cols-[72px_1fr] md:items-start">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[#1E2530] bg-[#0E1217] font-mono text-lg font-semibold text-[#E8442A]">
+                {step.step}
               </div>
               <div>
-                <h3 className="text-[16px] font-semibold">{step.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-[#8B95A5]">{step.desc}</p>
-                {step.time && (
-                  <span className="mt-2.5 inline-block rounded-full bg-[#2ECC71]/10 px-3 py-1 text-xs font-medium text-[#2ECC71]">
-                    {step.time}
-                  </span>
-                )}
+                <h3 className="text-lg font-semibold text-white">{step.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-[#8B95A5]">{step.detail}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── WHAT WE FIND ── */}
-      <section id="leaks" className="mx-auto max-w-5xl px-6 py-20">
+      <section id="faq" className="mx-auto max-w-4xl px-6 py-20">
         <div className="mb-12 text-center">
-          <h2 className="text-[clamp(26px,3.5vw,38px)] font-bold tracking-[-0.02em]">
-            What Corvidet catches that Stripe doesn&apos;t show you
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#E8442A]">FAQ</p>
+          <h2 className="mt-4 text-[clamp(28px,4vw,42px)] font-bold tracking-[-0.03em] text-white">
+            Questions your campaign traffic will ask
           </h2>
         </div>
-        <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
-          {leakTypes.map((leak, i) => (
-            <div
-              key={leak.title}
-              className={`fade-up delay-${(i % 3) + 1} rounded-xl border border-[#1E2530] bg-[#12161B] p-6 transition-all hover:border-[#2A3444]`}
-            >
-              <span className="text-[22px]">{leak.icon}</span>
-              <h3 className="mt-3.5 text-[15px] font-semibold">{leak.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[#8B95A5]">{leak.desc}</p>
-              <p className="mt-4 border-t border-[#1E2530] pt-4 font-mono text-xs text-[#F0B832]">{leak.stat}</p>
-            </div>
-          ))}
-        </div>
-      </section>
 
-      {/* ── COMPARISON TABLE ── */}
-      <section className="mx-auto max-w-[700px] px-6 py-20">
-        <div className="mb-12 text-center">
-          <h2 className="text-[clamp(26px,3.5vw,38px)] font-bold tracking-[-0.02em]">Corvidet vs. the alternatives</h2>
-          <p className="mt-3 text-[#8B95A5]">Others show you dashboards. We show you what&apos;s broken.</p>
-        </div>
-        <div className="overflow-hidden rounded-xl border border-[#1E2530]">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-[#1E2530]">
-                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-[0.06em] text-[#5A6575]">
-                  <span className="sr-only">Feature</span>
-                </th>
-                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-[0.06em] text-[#E8442A]">Corvidet</th>
-                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-[0.06em] text-[#5A6575]">ChartMogul</th>
-                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-[0.06em] text-[#5A6575]">Baremetrics</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#1E2530] bg-[#12161B]">
-              {vsRows.map((row) => (
-                <tr key={row.feature} className="hover:bg-[#181D24]">
-                  <td className="px-4 py-3.5 text-sm font-medium text-[#E8ECF1]">{row.feature}</td>
-                  <VsCell value={row.Corvidet} />
-                  <VsCell value={row.chartmogul} />
-                  <VsCell value={row.baremetrics} />
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* ── PRICING ── */}
-      <section id="pricing" className="mx-auto max-w-5xl px-6 py-20">
-        <div className="mb-12 text-center">
-          <h2 className="text-[clamp(26px,3.5vw,38px)] font-bold tracking-[-0.02em]">One scan could pay for a year</h2>
-          <p className="mt-3 text-[#8B95A5]">Free for early-stage. Priced to save you multiples of what you pay.</p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {plans.map((plan, i) => (
-            <div
-              key={plan.name}
-              className={`fade-up delay-${(i % 3) + 1} flex flex-col rounded-xl border p-7 transition-all ${
-                plan.featured
-                  ? "border-[#E8442A] shadow-[0_0_40px_rgba(232,68,42,0.12)]"
-                  : "border-[#1E2530] bg-[#12161B]"
-              }`}
-            >
-              <p className={`text-[11px] font-semibold uppercase tracking-[0.08em] ${plan.featured ? "text-[#E8442A]" : "text-[#5A6575]"}`}>
-                {plan.tag}
-              </p>
-              <h3 className="mt-3 text-lg font-bold">{plan.name}</h3>
-              <div className="mt-2 flex items-baseline gap-1">
-                <span className="font-mono text-4xl font-bold">{plan.price}</span>
-                <span className="text-sm text-[#8B95A5]">{plan.note}</span>
-              </div>
-              <p className="mt-0.5 text-xs text-[#5A6575]">{plan.subNote}</p>
-              <ul className="mt-5 flex-grow space-y-2.5">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-[#8B95A5]">
-                    <span className="mt-0.5 shrink-0 font-semibold text-[#2ECC71]">✓</span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href={plan.href}
-                className={`mt-6 w-full rounded-lg py-2.5 text-center text-sm font-semibold transition-all ${
-                  plan.featured
-                    ? "bg-[#E8442A] text-white hover:brightness-110"
-                    : "border border-[#1E2530] text-[#8B95A5] hover:border-[#2A3444] hover:text-[#E8ECF1]"
-                }`}
-              >
-                {plan.cta}
-              </Link>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── FAQ ── */}
-      <section id="faq" className="mx-auto max-w-[640px] px-6 py-20">
-        <div className="mb-12 text-center">
-          <h2 className="text-[clamp(26px,3.5vw,38px)] font-bold tracking-[-0.02em]">Questions</h2>
-        </div>
-        <div className="divide-y divide-[#1E2530]">
+        <div className="space-y-3">
           {faqs.map((item) => (
-            <details key={item.q} className="group py-5">
-              <summary className="flex cursor-pointer list-none items-center justify-between text-[15px] font-semibold">
-                {item.q}
-                <span className="ml-4 shrink-0 text-xl text-[#5A6575] transition-transform group-open:rotate-45">+</span>
+            <details key={item.question} className="group rounded-2xl border border-[#1E2530] bg-[#12161B] px-5 py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-[15px] font-semibold text-white">
+                {item.question}
+                <span className="text-xl text-[#5A6575] transition-transform group-open:rotate-45">+</span>
               </summary>
-              <p className="mt-3 text-sm leading-relaxed text-[#8B95A5]">{item.a}</p>
+              <p className="mt-3 text-sm leading-relaxed text-[#8B95A5]">{item.answer}</p>
             </details>
           ))}
         </div>
       </section>
 
-      {/* ── BOTTOM CTA ── */}
-      <section className="mx-auto max-w-[640px] px-6 pb-28 pt-4 text-center">
-        <div className="rounded-2xl border border-[#E8442A]/20 bg-[#E8442A]/5 px-8 py-12">
-          <h2 className="text-[clamp(24px,3vw,34px)] font-bold leading-tight tracking-[-0.02em]">
-            Find out what Stripe isn&apos;t telling you
+      <section className="mx-auto max-w-4xl px-6 pb-28 pt-6 text-center">
+        <div className="rounded-[30px] border border-[#E8442A]/20 bg-[#E8442A]/6 px-8 py-12 shadow-[0_24px_80px_rgba(232,68,42,0.08)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#E8442A]">Primary CTA</p>
+          <h2 className="mt-4 text-[clamp(28px,4vw,42px)] font-bold tracking-[-0.03em] text-white">
+            Request the free leak audit before spending on broad marketing.
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-[#8B95A5]">
-            Connect in 30 seconds. Get your leak report in 5 minutes. Free under $10K MRR.
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-[#8B95A5]">
+            If the offer converts with the right Stripe-native SaaS operator, then scale traffic.
+            If it does not, fix positioning before buying reach.
           </p>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link
-              href="/demo"
-              className="inline-flex items-center gap-2 rounded-lg bg-[#E8442A] px-6 py-3 font-semibold text-white transition-all hover:brightness-110 hover:-translate-y-px"
+              href={auditHref}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#E8442A] px-6 py-3 font-semibold text-white transition-all hover:-translate-y-px hover:brightness-110"
             >
-              Run live demo scan →
+              Request free audit
+              <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/login"
-              className="inline-flex items-center rounded-lg border border-[#1E2530] px-6 py-3 font-medium text-[#8B95A5] transition-all hover:border-[#2A3444] hover:text-[#E8ECF1]"
+              href={demoHref}
+              className="inline-flex items-center gap-2 rounded-xl border border-[#1E2530] px-6 py-3 font-medium text-[#8B95A5] transition-all hover:border-[#2A3444] hover:text-[#E8ECF1]"
             >
-              Sign in
+              View live demo
             </Link>
           </div>
-          <p className="mt-5 text-xs text-[#5A6575]">
-            No credit card required · Read-only access · Cancel anytime
-          </p>
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
       <footer className="border-t border-[#1E2530] px-6 py-8 text-center text-xs text-[#5A6575]">
-        © 2026 Corvidet ·{" "}
-        <a href="/privacy" className="transition-colors hover:text-[#8B95A5]">Privacy</a>
-        {" · "}
-        <a href="/contact" className="transition-colors hover:text-[#8B95A5]">Contact</a>
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 md:flex-row">
+          <p>Copyright 2026 Corvidet</p>
+          <div className="flex items-center gap-4">
+            <Link href="/audit" className="transition-colors hover:text-[#8B95A5]">
+              Request audit
+            </Link>
+            <Link href="/privacy" className="transition-colors hover:text-[#8B95A5]">
+              Privacy
+            </Link>
+            <Link href="/contact" className="transition-colors hover:text-[#8B95A5]">
+              Contact
+            </Link>
+          </div>
+        </div>
       </footer>
     </main>
   );

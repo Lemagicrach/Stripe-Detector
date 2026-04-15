@@ -1,7 +1,16 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+const metadataBase = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://corvidet.com");
+  } catch {
+    return new URL("https://corvidet.com");
+  }
+})();
+
 export const metadata: Metadata = {
+  metadataBase,
   title: "Corvidet - Stripe Revenue Leak Detector",
   description:
     "Find and fix revenue leaks in your Stripe account. Detect failed charges, expiring cards, and at-risk subscriptions in one scan.",

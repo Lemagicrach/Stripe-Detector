@@ -64,7 +64,17 @@ export type AuditRequestRow = {
   referrer: string | null;
   user_agent: string | null;
   status: AuditRequestStatus;
+  admin_notes: string | null;
+  last_contacted_at: string | null;
 };
+
+export const AUDIT_ACTIVE_PIPELINE_STATUSES = [
+  "requested",
+  "qualified",
+  "contacted",
+  "booked",
+  "connected",
+] as const satisfies readonly AuditRequestStatus[];
 
 export const AUDIT_MRR_BAND_LABELS: Record<AuditRequestPayload["mrrBand"], string> = {
   under_10k: "Under $10k MRR",
@@ -90,6 +100,19 @@ export const AUDIT_STATUS_LABELS: Record<AuditRequestStatus, string> = {
   won: "Won",
   lost: "Lost",
 };
+
+export const auditRequestUpdateSchema = z
+  .object({
+    status: z.enum(AUDIT_STATUSES).optional(),
+    adminNotes: z.string().trim().max(2000).optional(),
+    touchLastContactedAt: z.boolean().optional(),
+  })
+  .refine(
+    (value) => value.status !== undefined || value.adminNotes !== undefined || value.touchLastContactedAt,
+    {
+      message: "At least one update field is required.",
+    }
+  );
 
 export function formatAuditLabel(value: string) {
   return value
@@ -130,4 +153,8 @@ export function getSingleQueryValue(value: string | string[] | undefined) {
     return value[0] ?? "";
   }
   return value ?? "";
+}
+
+export function isAuditRequestActive(status: AuditRequestStatus) {
+  return (AUDIT_ACTIVE_PIPELINE_STATUSES as readonly AuditRequestStatus[]).includes(status);
 }

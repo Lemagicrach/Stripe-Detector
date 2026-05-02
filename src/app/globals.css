@@ -93,3 +93,49 @@ body {
 .badge-pulse {
   animation: pulse 2s infinite;
 }
+
+/* Glassmorphism utility */
+.glass-card {
+  background: rgba(18, 22, 27, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(30, 37, 48, 0.6);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  background: rgba(18, 22, 27, 0.6);
+  border-color: rgba(232, 68, 42, 0.3);
+  box-shadow: 0 10px 40px rgba(232, 68, 42, 0.1);
+}
+
+/* Text Gradient Utility */
+.text-gradient {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(135deg, #E8442A 0%, #FF6B4A 100%);
+}
+
+.text-gradient-light {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(135deg, #ffffff 0%, #C3CBD6 100%);
+}
+
+.orb-c {
+  width: 400px;
+  height: 400px;
+  background: #E8442A;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: floatC 16s ease-in-out infinite;
+}
+
+@keyframes floatC {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50%       { transform: translate(-50%, -50%) scale(1.1); }
+}

@@ -186,9 +186,10 @@ export default async function LandingPage({
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="orb orb-a" />
         <div className="orb orb-b" />
+        <div className="orb orb-c" />
       </div>
 
-      <nav className="sticky top-0 z-50 border-b border-[#1E2530] bg-[#0B0E11]/85 backdrop-blur-xl">
+      <nav className="sticky top-0 z-50 border-b border-[#1E2530]/50 bg-[#0B0E11]/60 backdrop-blur-2xl transition-all">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-3">
             <Image
@@ -285,30 +286,29 @@ export default async function LandingPage({
             Free Stripe revenue leak audit for B2B SaaS
           </span>
 
-          <h1 className="mt-6 text-[clamp(38px,6vw,64px)] font-bold leading-[1.02] tracking-[-0.04em] text-white">
+          <h1 className="mt-6 text-[clamp(42px,7vw,72px)] font-bold leading-[1.02] tracking-[-0.04em] text-white">
             Find the MRR your
-            <span className="bg-gradient-to-br from-[#E8442A] to-[#FF6B4A] bg-clip-text text-transparent">
+            <span className="text-gradient">
               {" "}Stripe Billing setup is quietly losing.
             </span>
           </h1>
 
           <p className="mt-6 max-w-[620px] text-[18px] leading-relaxed text-[#8B95A5]">
             Corvidet is best for Stripe-native B2B SaaS founders and operators between
-            {" "}$10k and $100k MRR who need a concrete leak audit, not another generic
-            analytics dashboard.
+            <span className="text-white font-medium">{" "}$10k and $100k MRR</span> who need a concrete leak audit, not another generic analytics dashboard.
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-8 flex flex-wrap gap-4">
             <Link
               href={auditHref}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#E8442A] px-5 py-3 text-[15px] font-semibold text-white transition-all hover:-translate-y-px hover:brightness-110"
+              className="group inline-flex items-center gap-2 rounded-xl bg-[#E8442A] px-6 py-3.5 text-[15px] font-semibold text-white transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-[#E8442A]/30 hover:brightness-110"
             >
               Request free audit
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
               href={demoHref}
-              className="inline-flex items-center gap-2 rounded-xl border border-[#1E2530] px-5 py-3 text-[15px] font-medium text-[#8B95A5] transition-all hover:border-[#2A3444] hover:text-[#E8ECF1]"
+              className="inline-flex items-center gap-2 rounded-xl border border-[#1E2530]/80 bg-white/5 backdrop-blur-md px-6 py-3.5 text-[15px] font-medium text-[#E8ECF1] transition-all hover:-translate-y-1 hover:bg-white/10 hover:border-white/20"
             >
               View live demo
             </Link>
@@ -327,7 +327,8 @@ export default async function LandingPage({
           </div>
         </div>
 
-        <div className="fade-up delay-1 rounded-[28px] border border-[#1E2530] bg-[#12161B]/90 p-6 shadow-[0_30px_100px_rgba(0,0,0,0.35)]">
+        <div className="fade-up delay-1 rounded-[28px] glass-card p-6 shadow-[0_30px_100px_rgba(0,0,0,0.35)] relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
           <div className="flex items-center justify-between gap-4 border-b border-[#1E2530] pb-5">
             <div>
               <p className="text-xs uppercase tracking-[0.16em] text-[#5A6575]">Audit preview</p>
@@ -406,11 +407,11 @@ export default async function LandingPage({
             {auditFindings.map((item) => {
               const Icon = item.icon;
               return (
-                <div key={item.title} className="rounded-[24px] border border-[#1E2530] bg-[#12161B] p-6 transition-colors hover:border-[#2A3444]">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#1E2530] bg-[#0E1217]">
+                <div key={item.title} className="rounded-[24px] glass-card group p-6 relative overflow-hidden">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#1E2530] bg-[#0E1217] transition-all duration-300 group-hover:scale-110 group-hover:border-[#E8442A]/30 group-hover:bg-[#E8442A]/10">
                     <Icon className="h-5 w-5 text-[#E8442A]" />
                   </div>
-                  <h3 className="mt-5 text-lg font-semibold text-white">{item.title}</h3>
+                  <h3 className="mt-5 text-lg font-semibold text-white transition-colors group-hover:text-[#E8442A]">{item.title}</h3>
                   <p className="mt-3 text-sm leading-relaxed text-[#8B95A5]">{item.description}</p>
                 </div>
               );
@@ -433,24 +434,24 @@ export default async function LandingPage({
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-[24px] border border-[#1E2530] bg-[#12161B] p-6">
-            <Search className="h-9 w-9 text-[#E8442A]" />
+          <div className="rounded-[24px] glass-card group p-6">
+            <Search className="h-9 w-9 text-[#E8442A] transition-transform duration-300 group-hover:-translate-y-1 group-hover:scale-110" />
             <h3 className="mt-5 text-lg font-semibold text-white">What we inspect</h3>
             <p className="mt-3 text-sm leading-relaxed text-[#8B95A5]">
               Failed invoices, dunning gaps, broken subscription states, card expiry patterns,
               and early churn signals tied to billing operations.
             </p>
           </div>
-          <div className="rounded-[24px] border border-[#1E2530] bg-[#12161B] p-6">
-            <Mail className="h-9 w-9 text-[#E8442A]" />
+          <div className="rounded-[24px] glass-card group p-6">
+            <Mail className="h-9 w-9 text-[#E8442A] transition-transform duration-300 group-hover:-translate-y-1 group-hover:scale-110" />
             <h3 className="mt-5 text-lg font-semibold text-white">What you receive</h3>
             <p className="mt-3 text-sm leading-relaxed text-[#8B95A5]">
               A concise action plan with the highest-value leak category, why it matters,
               and the first workflow or messaging fix to test.
             </p>
           </div>
-          <div className="rounded-[24px] border border-[#1E2530] bg-[#12161B] p-6">
-            <ChartNoAxesColumnIncreasing className="h-9 w-9 text-[#E8442A]" />
+          <div className="rounded-[24px] glass-card group p-6">
+            <ChartNoAxesColumnIncreasing className="h-9 w-9 text-[#E8442A] transition-transform duration-300 group-hover:-translate-y-1 group-hover:scale-110" />
             <h3 className="mt-5 text-lg font-semibold text-white">What this is not</h3>
             <p className="mt-3 text-sm leading-relaxed text-[#8B95A5]">
               Not another generic BI dashboard, not a month-long consulting engagement,
@@ -468,10 +469,10 @@ export default async function LandingPage({
           </h2>
         </div>
 
-        <div className="divide-y divide-[#1E2530] rounded-[28px] border border-[#1E2530] bg-[#12161B] px-6">
+        <div className="divide-y divide-[#1E2530]/50 rounded-[28px] glass-card px-6">
           {processSteps.map((step) => (
-            <div key={step.step} className="grid gap-5 py-7 md:grid-cols-[72px_1fr] md:items-start">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[#1E2530] bg-[#0E1217] font-mono text-lg font-semibold text-[#E8442A]">
+            <div key={step.step} className="grid gap-5 py-7 md:grid-cols-[72px_1fr] md:items-start group">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[#1E2530] bg-[#0E1217] font-mono text-lg font-semibold text-[#E8442A] transition-all duration-300 group-hover:border-[#E8442A]/30 group-hover:bg-[#E8442A]/10 group-hover:shadow-[0_0_15px_rgba(232,68,42,0.2)]">
                 {step.step}
               </div>
               <div>

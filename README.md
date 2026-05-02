@@ -214,15 +214,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 - Create a Supabase project.
 - Set redirect URLs for auth callback, for example:
   - `http://localhost:3000/auth/callback`
-- Apply the schema from `supabase/migrations/`.
-
-If you use the Supabase CLI locally:
-
-```bash
-npx supabase db push
-```
-
-If not, run the SQL in `supabase/migrations/001_initial_schema.sql` manually.
+- Apply the schema from `supabase/migrations/` (see [Database migrations](#database-migrations) below).
 
 #### Stripe
 
@@ -326,6 +318,66 @@ Key tables in the shipped schema:
 | `usage_events` | Product and operational event logging |
 
 All tables use Supabase Row Level Security. The service-role client is used only in trusted server contexts such as sync, billing, and webhook flows.
+
+## Database migrations
+
+The repo uses the [Supabase CLI](https://supabase.com/docs/guides/local-development/cli) to manage schema as versioned SQL files under `supabase/migrations/`. The CLI is invoked via `npx`, no global install needed.
+
+### Naming convention
+
+Migrations use a sequential prefix, **not** the CLI's default `<timestamp>_` format. Existing files:
+
+```
+supabase/migrations/001_initial_schema.sql
+supabase/migrations/002_update_plan_tiers.sql
+supabase/migrations/003_monthly_reports.sql
+supabase/migrations/004_audit_requests.sql
+```
+
+New migrations continue the sequence: `005_`, `006_`, etc. Use a short, lowercase, snake_case name describing the change (e.g. `005_rls.sql`, `006_quota_function.sql`).
+
+> Do **not** run `supabase db pull` against the linked project — it would emit a `<timestamp>_remote_schema.sql` file that duplicates the schema already captured in the sequential files.
+
+### One-time setup
+
+```bash
+# Authenticate the CLI with your Supabase account (interactive, opens browser)
+npx supabase login
+
+# Link the local repo to the remote project (writes project ref into supabase/config.toml)
+npx supabase link --project-ref <YOUR_PROJECT_REF>
+```
+
+### Daily workflow
+
+```bash
+# Diff local migrations against the linked remote schema
+npx supabase db diff
+
+# Lint migrations locally before opening a PR (CI runs the same check)
+npx supabase db lint --level error
+
+# Apply pending local migrations to the linked remote project
+npx supabase db push
+```
+
+### Adding a new migration
+
+1. Create `supabase/migrations/<NNN>_<short_name>.sql` with the next sequential number.
+2. Write idempotent SQL where possible (`create table if not exists`, `create index if not exists`, etc.).
+3. Run `npx supabase db lint --level error` locally — fix any issues before pushing.
+4. Open a PR. CI (`.github/workflows/db.yml`) re-runs the lint against your branch.
+5. After merge, run `npx supabase db push` to apply the migration to the linked Supabase project.
+
+### Resetting a local Supabase stack
+
+If you run a local Supabase instance (`npx supabase start`), you can reapply all migrations from scratch with:
+
+```bash
+npx supabase db reset
+```
+
+This drops the local database, replays every migration in order, and runs `supabase/seed.sql`.
 
 ## Contributor Notes
 

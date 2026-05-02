@@ -1,0 +1,4 @@
+-- Seed data for local development.
+-- This file is loaded after migrations during `supabase db reset`.
+-- Add INSERT statements here for fixtures useful when developing locally.
+-- Do NOT put production data or secrets here.

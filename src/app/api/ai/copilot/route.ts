@@ -112,7 +112,6 @@ export async function POST(req: NextRequest) {
 
     const admin = getSupabaseAdminClient();
 
-    // â"€â"€ Per-plan monthly AI query enforcement â"€â"€
     const { data: profileRaw } = await admin
       .from("user_profiles")
       .select("plan")
@@ -121,38 +120,20 @@ export async function POST(req: NextRequest) {
     const plan = ((profileRaw as { plan?: string } | null)?.plan ?? "free") as PlanTier;
     const limit = PLAN_LIMITS[plan]?.aiQueriesPerMonth ?? PLAN_LIMITS.free.aiQueriesPerMonth;
 
-    // Count AI queries used this calendar month
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-
-    const { count: usedThisMonth } = await admin
-      .from("usage_events")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("event_type", "ai_query")
-      .gte("created_at", startOfMonth.toISOString());
-
-    const used = usedThisMonth ?? 0;
-    if (used >= limit) {
+    const { data: quotaAllowed, error: quotaError } = await admin.rpc(
+      "increment_ai_usage_if_allowed",
+      { p_user_id: user.id, p_plan_limit: limit }
+    );
+    if (quotaError) {
+      console.error("AI_COPILOT quota rpc error", quotaError);
+      return badRequest("Quota check failed");
+    }
+    if (!quotaAllowed) {
       return NextResponse.json(
-        {
-          error: "Monthly AI query limit reached",
-          plan,
-          limit,
-          used,
-          upgradeUrl: "/dashboard/billing",
-        },
+        { error: "Monthly AI query limit reached", plan, limit, upgradeUrl: "/dashboard/billing" },
         { status: 402 }
       );
     }
-
-    // Track this query before calling the API (fail-open on insert error)
-    void admin.from("usage_events").insert({
-      user_id: user.id,
-      event_type: "ai_query",
-      metadata: { plan, used: used + 1, limit },
-    });
 
     const { data: connectionRaw } = await admin
       .from("stripe_connections").select("id")

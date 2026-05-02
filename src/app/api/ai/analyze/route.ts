@@ -4,6 +4,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { handleApiError, unauthorized, badRequest } from "@/lib/server-error";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { PLAN_LIMITS, type PlanTier } from "@/lib/stripe";
 
 type StripeConnection = {
   id: string;
@@ -34,6 +35,30 @@ export async function GET() {
     if (!apiKey) return badRequest("AI not configured");
 
     const admin = getSupabaseAdminClient();
+
+    const { data: profileRaw } = await admin
+      .from("user_profiles")
+      .select("plan")
+      .eq("id", user.id)
+      .single();
+    const plan = ((profileRaw as { plan?: string } | null)?.plan ?? "free") as PlanTier;
+    const limit = PLAN_LIMITS[plan]?.aiQueriesPerMonth ?? PLAN_LIMITS.free.aiQueriesPerMonth;
+
+    const { data: quotaAllowed, error: quotaError } = await admin.rpc(
+      "increment_ai_usage_if_allowed",
+      { p_user_id: user.id, p_plan_limit: limit }
+    );
+    if (quotaError) {
+      console.error("AI_ANALYZE quota rpc error", quotaError);
+      return badRequest("Quota check failed");
+    }
+    if (!quotaAllowed) {
+      return NextResponse.json(
+        { error: "Monthly AI query limit reached", plan, limit, upgradeUrl: "/dashboard/billing" },
+        { status: 402 }
+      );
+    }
+
     const { data: connectionRaw } = await admin.from("stripe_connections").select("id")
       .eq("user_id", user.id).eq("status", "active").limit(1).single();
     const connection = connectionRaw as unknown as StripeConnection | null;

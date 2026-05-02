@@ -1,4 +1,4 @@
-﻿-- RevPilot Initial Schema
+-- RevPilot Initial Schema
 -- Run: npx supabase db push
 
 -- Enable necessary extensions

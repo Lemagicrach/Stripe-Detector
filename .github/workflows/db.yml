@@ -1,0 +1,35 @@
+name: db
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/config.toml"
+      - ".github/workflows/db.yml"
+  push:
+    branches:
+      - master
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/config.toml"
+
+jobs:
+  lint:
+    name: supabase db lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase stack
+        run: supabase start --workdir .
+
+      - name: Lint database (errors fail the job)
+        run: supabase db lint --workdir . --level error
+
+      - name: Stop local Supabase stack
+        if: always()
+        run: supabase stop --workdir . --no-backup

@@ -6,7 +6,42 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export interface Database {
   public: {
     Tables: {
-      // Will be populated by `npx supabase gen types`
+      stripe_connections: {
+        Row: {
+          id: string;
+          user_id: string;
+          status: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+      };
+      metrics_snapshots: {
+        Row: {
+          id: string;
+          connection_id: string;
+          snapshot_date: string;
+          mrr: number;
+          active_customers: number;
+          churn_rate: number;
+          nrr: number;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+      };
+      revenue_leaks: {
+        Row: {
+          id: string;
+          connection_id: string;
+          status: string;
+          category: string;
+          severity: string;
+          title: string;
+          lost_revenue: number;
+          recoverable_revenue: number;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+      };
       [key: string]: {
         Row: Record<string, unknown>;
         Insert: Record<string, unknown>;

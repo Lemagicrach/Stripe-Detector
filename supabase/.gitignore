@@ -1,0 +1,6 @@
+# Supabase CLI working directories
+.branches
+.temp
+
+# Local-only environment overrides
+.env

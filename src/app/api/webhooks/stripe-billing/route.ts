@@ -25,6 +25,18 @@ export async function POST(req: NextRequest) {
 
   const admin = getSupabaseAdminClient();
 
+  const { error: dedupError } = await admin
+    .from("stripe_events_processed")
+    .insert({ event_id: event.id, source: "billing" });
+
+  if (dedupError) {
+    if ((dedupError as { code?: string }).code === "23505") {
+      return NextResponse.json({ received: true, deduped: true });
+    }
+    console.error("[STRIPE_BILLING_WEBHOOK] dedup insert failed", dedupError);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
+
   try {
     switch (event.type) {
       case "checkout.session.completed": {

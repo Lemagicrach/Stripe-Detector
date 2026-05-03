@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getStripeServerClient, getSupabaseAdminClient } from "@/lib/server-clients";
 import { encrypt } from "@/lib/encryption";
-import { handleApiError, unauthorized, badRequest } from "@/lib/server-error";
+import { handleApiError, unauthorized, badRequest, rateLimited } from "@/lib/server-error";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 function getAppUrl() {
@@ -52,14 +52,14 @@ async function trackUsageEvent(userId: string, eventType: string, metadata: Reco
 
 export async function GET(req: NextRequest) {
   try {
-    const { allowed } = checkRateLimit({ key: "stripe-connect", limit: 10, windowMs: 60_000 });
-    if (!allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-
     const supabase = await getSupabaseServerClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return unauthorized();
+
+    const { success, reset } = await checkRateLimit("default", user.id);
+    if (!success) return rateLimited(reset);
 
     const url = new URL(req.url);
     const code = url.searchParams.get("code");

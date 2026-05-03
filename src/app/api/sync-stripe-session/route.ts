@@ -13,8 +13,8 @@ async function runSync() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return unauthorized();
 
-    const { allowed } = checkRateLimit({ key: `sync-stripe-session:${user.id}`, limit: 5, windowMs: 60_000 });
-    if (!allowed) return rateLimited();
+    const { success, reset } = await checkRateLimit("default", user.id);
+    if (!success) return rateLimited(reset);
 
     const admin = getSupabaseAdminClient();
     const { data: connection, error: connectionError } = await admin

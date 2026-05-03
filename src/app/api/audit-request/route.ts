@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendViaResend } from "@/lib/resend";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, clientIdentifier } from "@/lib/rate-limit";
 import { badRequest, handleApiError, rateLimited } from "@/lib/server-error";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
 import {
@@ -9,12 +9,6 @@ import {
   getAuditThankYouHref,
   type AuditRequestPayload,
 } from "@/lib/audit-requests";
-
-function getClientKey(request: NextRequest) {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  const realIp = request.headers.get("x-real-ip");
-  return (forwardedFor?.split(",")[0] ?? realIp ?? "unknown").trim();
-}
 
 function escapeHtml(value: string) {
   return value
@@ -94,13 +88,8 @@ function buildConfirmationHtml(payload: AuditRequestPayload) {
 
 export async function POST(request: NextRequest) {
   try {
-    const clientKey = getClientKey(request);
-    const { allowed } = checkRateLimit({
-      key: `audit-request:${clientKey}`,
-      limit: 5,
-      windowMs: 60 * 60 * 1000,
-    });
-    if (!allowed) return rateLimited();
+    const { success, reset } = await checkRateLimit("formPublic", clientIdentifier(request));
+    if (!success) return rateLimited(reset);
 
     const rawBody = await request.json().catch(() => null);
     const parsed = auditRequestSchema.safeParse(rawBody);

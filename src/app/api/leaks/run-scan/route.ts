@@ -4,17 +4,17 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { syncStripeMetrics } from "@/lib/stripe-metrics";
 import { detectRevenueLeaks, calculateLeakScore } from "@/lib/revenue-leaks";
-import { handleApiError, unauthorized, badRequest } from "@/lib/server-error";
+import { handleApiError, unauthorized, badRequest, rateLimited } from "@/lib/server-error";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
-    const { allowed } = checkRateLimit({ key: "run-scan", limit: 3, windowMs: 60_000 });
-    if (!allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-
     const supabase = await getSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return unauthorized();
+
+    const { success, reset } = await checkRateLimit("scan", user.id);
+    if (!success) return rateLimited(reset);
 
     const admin = getSupabaseAdminClient();
     const { data: connection } = await admin

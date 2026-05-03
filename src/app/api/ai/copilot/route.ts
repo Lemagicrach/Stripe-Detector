@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
-import { handleApiError, unauthorized, badRequest } from "@/lib/server-error";
+import { handleApiError, unauthorized, badRequest, rateLimited } from "@/lib/server-error";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { PLAN_LIMITS, type PlanTier } from "@/lib/stripe";
 
@@ -95,13 +95,12 @@ function buildSystemPrompt(context: CopilotContext) {
 
 export async function POST(req: NextRequest) {
   try {
-    // Burst rate limit (global) - prevents API abuse regardless of plan
-    const { allowed } = checkRateLimit({ key: "ai-copilot", limit: 20, windowMs: 60_000 });
-    if (!allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-
     const supabase = await getSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return unauthorized();
+
+    const { success, reset } = await checkRateLimit("ai", user.id);
+    if (!success) return rateLimited(reset);
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return badRequest("AI copilot not configured");

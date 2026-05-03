@@ -21,6 +21,14 @@ export function badRequest(message: string): NextResponse {
   return NextResponse.json({ error: message }, { status: 400 });
 }
 
-export function rateLimited(): NextResponse {
-  return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+export function rateLimited(reset?: number): NextResponse {
+  const headers: Record<string, string> = {};
+  if (typeof reset === "number") {
+    const retryAfterSeconds = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+    headers["Retry-After"] = String(retryAfterSeconds);
+  }
+  return NextResponse.json(
+    { error: "Too many requests" },
+    { status: 429, headers }
+  );
 }

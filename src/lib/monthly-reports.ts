@@ -1,6 +1,6 @@
 import Stripe from "stripe";
-import { decrypt } from "@/lib/encryption";
 import { sendViaResend } from "@/lib/resend";
+import { withStripeConnect } from "@/lib/stripe-connect";
 import {
   formatDeltaPercent,
   formatReportCurrency,
@@ -83,13 +83,6 @@ function roundCurrency(value: number): number {
 
 function roundRatio(value: number): number {
   return Math.round((value + Number.EPSILON) * 10000) / 10000;
-}
-
-function createConnectionStripeClient(encryptedAccessToken: string): Stripe {
-  return new Stripe(decrypt(encryptedAccessToken), {
-    apiVersion: "2026-02-25.clover",
-    typescript: true,
-  });
 }
 
 function parseIsoDate(value: string) {
@@ -558,16 +551,20 @@ export async function generateMonthlyRevenueHealthReport(
   }
 
   const connection = await getActiveConnection(input.userId, input.connectionId);
-  const stripe = createConnectionStripeClient(connection.encrypted_access_token);
   const startUnix = Math.floor(start.getTime() / 1000);
   const endUnix = Math.floor(end.getTime() / 1000);
   const periodLabel = formatPeriodLabel(start);
 
-  const [invoices, subscriptions, previousRevenue] = await Promise.all([
-    listInvoicesForRange(stripe, startUnix, endUnix),
-    listSubscriptions(stripe),
+  const [stripeData, previousRevenue] = await Promise.all([
+    withStripeConnect(connection.id, async (stripe) => {
+      return Promise.all([
+        listInvoicesForRange(stripe, startUnix, endUnix),
+        listSubscriptions(stripe),
+      ]);
+    }),
     getPreviousRevenue(connection.id, input.startDate),
   ]);
+  const [invoices, subscriptions] = stripeData;
 
   const invoiceSummary = summarizeInvoices(invoices);
   const subscriptionSummary = summarizeSubscriptions(subscriptions, startUnix, endUnix);

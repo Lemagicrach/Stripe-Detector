@@ -1,9 +1,10 @@
 // src/lib/revenue-leaks.ts
+import Stripe from "stripe";
 import { getFailedInvoices, getExpiringCards } from "./stripe-metrics";
 import { log } from "@/lib/logger";
 
 interface DetectionContext {
-  connectionId: string; userId: string; encryptedAccessToken: string;
+  connectionId: string; userId: string; stripe: Stripe;
   metrics: {
     mrr: number; activeCustomers: number; churnRate: number;
     subscriptionDetails: Array<{
@@ -35,7 +36,7 @@ export async function detectRevenueLeaks(ctx: DetectionContext): Promise<LeakRes
 async function detectFailedPayments(ctx: DetectionContext): Promise<LeakResult[]> {
   try {
     const thirtyDaysAgo = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
-    const failed = await getFailedInvoices(ctx.encryptedAccessToken, thirtyDaysAgo);
+    const failed = await getFailedInvoices(ctx.stripe, thirtyDaysAgo);
     if (failed.length === 0) return [];
 
     const totalLost = failed.reduce((sum, inv) => sum + (inv.amount_due || 0) / 100, 0);
@@ -64,7 +65,7 @@ async function detectFailedPayments(ctx: DetectionContext): Promise<LeakResult[]
 
 async function detectExpiringCards(ctx: DetectionContext): Promise<LeakResult[]> {
   try {
-    const expiring = await getExpiringCards(ctx.encryptedAccessToken);
+    const expiring = await getExpiringCards(ctx.stripe);
     if (expiring.length === 0) return [];
 
     const atRiskIds = new Set(expiring.map(c => c.customerId));

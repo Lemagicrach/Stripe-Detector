@@ -1,6 +1,10 @@
 // src/lib/stripe-metrics.ts
+//
+// Pure Stripe API helpers. Each function takes an authenticated `Stripe`
+// instance (typically obtained via `withStripeConnect(connectionId, ...)` so
+// the caller transparently gets token refresh on expiry).
+
 import Stripe from "stripe";
-import { decrypt } from "./encryption";
 
 interface SyncResult {
   mrr: number; arr: number; activeCustomers: number;
@@ -15,12 +19,7 @@ interface SubscriptionDetail {
   cancelAtPeriodEnd: boolean; created: number;
 }
 
-export async function syncStripeMetrics(
-  stripeAccountId: string, encryptedAccessToken: string
-): Promise<SyncResult> {
-  const accessToken = decrypt(encryptedAccessToken);
-  const stripe = new Stripe(accessToken, { apiVersion: "2026-02-25.clover" });
-
+export async function syncStripeMetrics(stripe: Stripe): Promise<SyncResult> {
   // Fetch all subscriptions
   const subscriptions: Stripe.Subscription[] = [];
   let hasMore = true;
@@ -104,8 +103,7 @@ function calculateSubscriptionMrr(sub: Stripe.Subscription): number {
   return mrr;
 }
 
-export async function getFailedInvoices(encryptedAccessToken: string, since: number): Promise<Stripe.Invoice[]> {
-  const stripe = new Stripe(decrypt(encryptedAccessToken), { apiVersion: "2026-02-25.clover" });
+export async function getFailedInvoices(stripe: Stripe, since: number): Promise<Stripe.Invoice[]> {
   const invoices: Stripe.Invoice[] = [];
   let hasMore = true;
   let startingAfter: string | undefined;
@@ -125,8 +123,7 @@ export async function getFailedInvoices(encryptedAccessToken: string, since: num
   return invoices;
 }
 
-export async function getExpiringCards(encryptedAccessToken: string) {
-  const stripe = new Stripe(decrypt(encryptedAccessToken), { apiVersion: "2026-02-25.clover" });
+export async function getExpiringCards(stripe: Stripe) {
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();

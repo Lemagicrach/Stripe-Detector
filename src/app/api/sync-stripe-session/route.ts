@@ -7,6 +7,7 @@ import { buildRevenueSignals, GENERATED_SYNC_SIGNAL_TYPES } from "@/lib/revenue-
 import { handleApiError, unauthorized, badRequest, rateLimited } from "@/lib/server-error";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { log } from "@/lib/logger";
+import { withStripeConnect } from "@/lib/stripe-connect";
 
 async function runSync() {
   try {
@@ -37,7 +38,7 @@ async function runSync() {
 
     const syncedAt = new Date().toISOString();
     const snapshotDate = syncedAt.split("T")[0];
-    const metrics = await syncStripeMetrics(connection.stripe_account_id, connection.encrypted_access_token);
+    const metrics = await withStripeConnect(connection.id, (stripe) => syncStripeMetrics(stripe));
 
     const { error: metricsError } = await admin.from("metrics_snapshots").upsert(
       {
@@ -69,12 +70,14 @@ async function runSync() {
 
     if (historyError) throw historyError;
 
-    const detectedLeaks = await detectRevenueLeaks({
-      connectionId: connection.id,
-      userId: user.id,
-      encryptedAccessToken: connection.encrypted_access_token,
-      metrics,
-    });
+    const detectedLeaks = await withStripeConnect(connection.id, (stripe) =>
+      detectRevenueLeaks({
+        connectionId: connection.id,
+        userId: user.id,
+        stripe,
+        metrics,
+      })
+    );
 
     const { error: deleteLeaksError } = await admin
       .from("revenue_leaks")

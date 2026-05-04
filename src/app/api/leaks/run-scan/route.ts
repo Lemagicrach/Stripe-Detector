@@ -6,6 +6,7 @@ import { syncStripeMetrics } from "@/lib/stripe-metrics";
 import { detectRevenueLeaks, calculateLeakScore } from "@/lib/revenue-leaks";
 import { handleApiError, unauthorized, badRequest, rateLimited } from "@/lib/server-error";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { withStripeConnect } from "@/lib/stripe-connect";
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,13 +25,14 @@ export async function POST(req: NextRequest) {
 
     if (!connection) return badRequest("No active Stripe connection. Connect Stripe first.");
 
-    // 1. Sync fresh metrics
-    const metrics = await syncStripeMetrics(connection.stripe_account_id, connection.encrypted_access_token);
-
-    // 2. Run leak detection
-    const leaks = await detectRevenueLeaks({
-      connectionId: connection.id, userId: user.id,
-      encryptedAccessToken: connection.encrypted_access_token, metrics,
+    // 1+2. Sync metrics and run leak detection under a single Stripe Connect
+    //      session (transparent token refresh on expiry).
+    const { metrics, leaks } = await withStripeConnect(connection.id, async (stripe) => {
+      const m = await syncStripeMetrics(stripe);
+      const l = await detectRevenueLeaks({
+        connectionId: connection.id, userId: user.id, stripe, metrics: m,
+      });
+      return { metrics: m, leaks: l };
     });
 
     // 3. Store leaks

@@ -5,6 +5,7 @@ import { syncStripeMetrics } from "@/lib/stripe-metrics";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { log } from "@/lib/logger";
 import { pingHealthcheck } from "@/lib/healthcheck";
+import { withStripeConnect } from "@/lib/stripe-connect";
 
 const ROUTE = "/api/cron/sync-all";
 
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
 
     for (const conn of connections) {
       try {
-        const metrics = await syncStripeMetrics(conn.stripe_account_id, conn.encrypted_access_token);
+        const metrics = await withStripeConnect(conn.id, (stripe) => syncStripeMetrics(stripe));
 
         await admin.from("metrics_snapshots").upsert({
           connection_id: conn.id, user_id: conn.user_id,

@@ -6,6 +6,7 @@ import { handleApiError } from "@/lib/server-error";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { log } from "@/lib/logger";
 import { pingHealthcheck } from "@/lib/healthcheck";
+import { withStripeConnect } from "@/lib/stripe-connect";
 
 const ROUTE = "/api/cron/detect-revenue-leaks";
 
@@ -36,16 +37,15 @@ export async function GET(request: Request) {
 
     for (const conn of connections) {
       try {
-        const metrics = await syncStripeMetrics(
-          conn.stripe_account_id,
-          conn.encrypted_access_token
-        );
-
-        const leaks = await detectRevenueLeaks({
-          connectionId: conn.id,
-          userId: conn.user_id,
-          encryptedAccessToken: conn.encrypted_access_token,
-          metrics,
+        const { metrics, leaks } = await withStripeConnect(conn.id, async (stripe) => {
+          const m = await syncStripeMetrics(stripe);
+          const l = await detectRevenueLeaks({
+            connectionId: conn.id,
+            userId: conn.user_id,
+            stripe,
+            metrics: m,
+          });
+          return { metrics: m, leaks: l };
         });
 
         // Replace open leaks for this connection with fresh scan results

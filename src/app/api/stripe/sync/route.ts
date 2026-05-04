@@ -5,6 +5,7 @@ import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { syncStripeMetrics } from "@/lib/stripe-metrics";
 import { handleApiError, unauthorized, badRequest, rateLimited } from "@/lib/server-error";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { withStripeConnect } from "@/lib/stripe-connect";
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
 
     if (!connection) return badRequest("No active Stripe connection found");
 
-    const metrics = await syncStripeMetrics(connection.stripe_account_id, connection.encrypted_access_token);
+    const metrics = await withStripeConnect(connection.id, (stripe) => syncStripeMetrics(stripe));
     const today = new Date().toISOString().split("T")[0];
 
     await admin.from("metrics_snapshots").upsert({

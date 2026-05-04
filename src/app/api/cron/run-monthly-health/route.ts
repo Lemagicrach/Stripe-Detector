@@ -8,12 +8,19 @@ import {
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { handleApiError } from "@/lib/server-error";
+import { log } from "@/lib/logger";
+import { pingHealthcheck } from "@/lib/healthcheck";
+
+const ROUTE = "/api/cron/run-monthly-health";
 
 export const maxDuration = 300;
 
 async function runMonthlyHealth(request: Request) {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
+
+  const HC = process.env.HC_MONTHLY_HEALTH_URL;
+  await pingHealthcheck(HC, "start");
 
   try {
     const admin = getSupabaseAdminClient();
@@ -57,10 +64,7 @@ async function runMonthlyHealth(request: Request) {
           });
           emailSent = true;
         } catch (emailError) {
-          console.error(
-            `[MONTHLY_HEALTH_CRON] Email failed for connection ${connection.id}:`,
-            emailError
-          );
+          log("error", "Monthly health email failed", { route: ROUTE, connectionId: connection.id, userId: connection.user_id, error: emailError });
         }
 
         results.push({
@@ -81,6 +85,7 @@ async function runMonthlyHealth(request: Request) {
       }
     }
 
+    await pingHealthcheck(HC);
     return NextResponse.json({
       ok: true,
       period_start: startDate,
@@ -90,6 +95,7 @@ async function runMonthlyHealth(request: Request) {
       results,
     });
   } catch (error) {
+    await pingHealthcheck(HC, "fail");
     return handleApiError(error, "MONTHLY_HEALTH_CRON");
   }
 }

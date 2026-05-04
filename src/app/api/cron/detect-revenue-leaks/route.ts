@@ -4,12 +4,19 @@ import { syncStripeMetrics } from "@/lib/stripe-metrics";
 import { detectRevenueLeaks, calculateLeakScore } from "@/lib/revenue-leaks";
 import { handleApiError } from "@/lib/server-error";
 import { verifyCronAuth } from "@/lib/cron-auth";
+import { log } from "@/lib/logger";
+import { pingHealthcheck } from "@/lib/healthcheck";
+
+const ROUTE = "/api/cron/detect-revenue-leaks";
 
 export const maxDuration = 300;
 
 export async function GET(request: Request) {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
+
+  const HC = process.env.HC_DETECT_LEAKS_URL;
+  await pingHealthcheck(HC, "start");
 
   try {
     const admin = getSupabaseAdminClient();
@@ -20,6 +27,7 @@ export async function GET(request: Request) {
       .eq("status", "active");
 
     if (!connections?.length) {
+      await pingHealthcheck(HC);
       return NextResponse.json({ success: true, processed: 0 });
     }
 
@@ -78,10 +86,11 @@ export async function GET(request: Request) {
         processed++;
       } catch (err) {
         errors++;
-        console.error(`[CRON_DETECT_LEAKS] Failed for connection ${conn.id}:`, err);
+        log("error", "Cron iteration failed", { route: ROUTE, connectionId: conn.id, error: err });
       }
     }
 
+    await pingHealthcheck(HC);
     return NextResponse.json({
       success: true,
       processed,
@@ -89,6 +98,7 @@ export async function GET(request: Request) {
       total: connections.length,
     });
   } catch (error) {
+    await pingHealthcheck(HC, "fail");
     return handleApiError(error, "CRON_DETECT_LEAKS");
   }
 }

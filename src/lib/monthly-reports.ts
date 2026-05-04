@@ -7,6 +7,7 @@ import {
   formatReportPercent,
 } from "@/lib/report-format";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
+import { log } from "@/lib/logger";
 import type {
   ActiveStripeConnection,
   GenerateMonthlyRevenueHealthInput,
@@ -203,7 +204,7 @@ export async function trackUsageEvent(
   });
 
   if (error) {
-    console.error(`[MONTHLY_REPORTS] Failed to track ${eventType}:`, error.message);
+    log("error", "Failed to track monthly report event", { eventType, error });
   }
 }
 
@@ -400,7 +401,7 @@ async function getPreviousRevenue(connectionId: string, periodStart: string): Pr
     .maybeSingle();
 
   if (error) {
-    console.error("[MONTHLY_REPORTS] Failed to load previous report:", error.message);
+    log("error", "Failed to load previous monthly report", { error });
     return 0;
   }
 

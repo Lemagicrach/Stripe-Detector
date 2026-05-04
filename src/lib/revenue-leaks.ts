@@ -1,5 +1,6 @@
 // src/lib/revenue-leaks.ts
 import { getFailedInvoices, getExpiringCards } from "./stripe-metrics";
+import { log } from "@/lib/logger";
 
 interface DetectionContext {
   connectionId: string; userId: string; encryptedAccessToken: string;
@@ -58,7 +59,7 @@ async function detectFailedPayments(ctx: DetectionContext): Promise<LeakResult[]
       ],
       status: "open",
     }];
-  } catch (err) { console.error("Failed payment detection error:", err); return []; }
+  } catch (err) { log("error", "Failed payment detection error", { error: err }); return []; }
 }
 
 async function detectExpiringCards(ctx: DetectionContext): Promise<LeakResult[]> {
@@ -85,7 +86,7 @@ async function detectExpiringCards(ctx: DetectionContext): Promise<LeakResult[]>
       ],
       status: "open",
     }];
-  } catch (err) { console.error("Expiring card detection error:", err); return []; }
+  } catch (err) { log("error", "Expiring card detection error", { error: err }); return []; }
 }
 
 async function detectPendingCancelations(ctx: DetectionContext): Promise<LeakResult[]> {

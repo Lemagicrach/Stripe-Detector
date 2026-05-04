@@ -1,12 +1,15 @@
 // src/app/api/webhooks/stripe-connect/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient, getStripeServerClient } from "@/lib/server-clients";
+import { log } from "@/lib/logger";
 import type Stripe from "stripe";
+
+const ROUTE = "/api/webhooks/stripe-connect";
 
 export async function POST(req: NextRequest) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
-    console.error("[STRIPE_CONNECT_WEBHOOK] STRIPE_WEBHOOK_SECRET is not set");
+    log("error", "STRIPE_WEBHOOK_SECRET is not set", { route: ROUTE });
     return NextResponse.json({ error: "Webhook not configured" }, { status: 400 });
   }
 
@@ -19,7 +22,7 @@ export async function POST(req: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
   } catch (err) {
-    console.error("Webhook signature verification failed:", err);
+    log("error", "Webhook signature verification failed", { route: ROUTE, error: err });
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
@@ -33,7 +36,7 @@ export async function POST(req: NextRequest) {
     if ((dedupError as { code?: string }).code === "23505") {
       return NextResponse.json({ received: true, deduped: true });
     }
-    console.error("[STRIPE_CONNECT_WEBHOOK] dedup insert failed", dedupError);
+    log("error", "Dedup insert failed", { route: ROUTE, eventId: event.id, error: dedupError });
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 
@@ -100,7 +103,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("Webhook processing error:", error);
+    log("error", "Webhook handler failed", { route: ROUTE, eventId: event.id, eventType: event.type, error });
     return NextResponse.json({ received: true });
   }
 }

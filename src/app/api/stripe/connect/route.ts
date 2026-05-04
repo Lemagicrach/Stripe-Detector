@@ -4,6 +4,7 @@ import { getStripeServerClient, getSupabaseAdminClient } from "@/lib/server-clie
 import { encrypt } from "@/lib/encryption";
 import { handleApiError, unauthorized, badRequest, rateLimited } from "@/lib/server-error";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { log } from "@/lib/logger";
 
 function getAppUrl() {
   return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -46,7 +47,7 @@ async function trackUsageEvent(userId: string, eventType: string, metadata: Reco
 
   if (error) {
     // Usage logging should never block auth/connect flow.
-    console.warn(`[STRIPE_CONNECT] usage event "${eventType}" failed:`, error.message);
+    log("warn", "Usage event insert failed", { route: "/api/stripe/connect", userId, eventType, error });
   }
 }
 

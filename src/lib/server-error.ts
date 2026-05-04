@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
+import { log } from "@/lib/logger";
 
 export function handleApiError(error: unknown, context?: string): NextResponse {
   const message = error instanceof Error ? error.message : "Unknown error";
-  const prefix = context ? `[${context}] ` : "";
 
-  console.error(`${prefix}API Error:`, message);
+  log("error", "API error", { route: context, error });
 
   // Never leak internal errors to client
   return NextResponse.json(

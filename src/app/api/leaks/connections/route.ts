@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { handleApiError, unauthorized } from "@/lib/server-error";
+import { log } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -31,7 +32,7 @@ export async function GET() {
       .order("lost_revenue", { ascending: false });
 
     if (error) {
-      console.error("[LEAKS_CONNECTIONS]", error);
+      log("error", "Leaks connections query failed", { route: "/api/leaks/connections", userId: user.id, error });
       return NextResponse.json({ leaks: [], leakScore: 0 });
     }
 

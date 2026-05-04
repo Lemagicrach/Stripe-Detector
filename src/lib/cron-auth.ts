@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
+import { log } from "@/lib/logger";
 
 /**
  * Verifies the Authorization header for cron job routes.
@@ -11,7 +12,7 @@ import { timingSafeEqual } from "crypto";
 export function verifyCronAuth(request: Request): NextResponse | null {
   const secret = process.env.CRON_SECRET;
   if (!secret) {
-    console.error("[CRON_AUTH] CRON_SECRET is not set — rejecting request");
+    log("error", "CRON_SECRET is not set, rejecting request", { errorCode: "missing_cron_secret" });
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

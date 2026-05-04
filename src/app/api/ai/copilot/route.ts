@@ -4,6 +4,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { handleApiError, unauthorized, badRequest, rateLimited } from "@/lib/server-error";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { log } from "@/lib/logger";
 import { PLAN_LIMITS, type PlanTier } from "@/lib/stripe";
 
 type CurrentMetrics = {
@@ -124,7 +125,7 @@ export async function POST(req: NextRequest) {
       { p_user_id: user.id, p_plan_limit: limit }
     );
     if (quotaError) {
-      console.error("AI_COPILOT quota rpc error", quotaError);
+      log("error", "Quota RPC failed", { route: "/api/ai/copilot", userId: user.id, error: quotaError });
       return badRequest("Quota check failed");
     }
     if (!quotaAllowed) {
@@ -171,7 +172,7 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const errBody = await response.text();
-      console.error("Claude API error:", response.status, errBody);
+      log("error", "Claude API error", { route: "/api/ai/copilot", userId: user.id, status: response.status, body: errBody });
       return NextResponse.json({ error: "AI service error" }, { status: 502 });
     }
 

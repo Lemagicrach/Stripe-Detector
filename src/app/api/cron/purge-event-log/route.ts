@@ -2,6 +2,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { verifyCronAuth } from "@/lib/cron-auth";
+import { log } from "@/lib/logger";
+
+const ROUTE = "/api/cron/purge-event-log";
 
 export async function GET(req: NextRequest) {
   const authError = verifyCronAuth(req);
@@ -16,7 +19,7 @@ export async function GET(req: NextRequest) {
     .lt("processed_at", cutoff);
 
   if (error) {
-    console.error("[CRON_PURGE_EVENT_LOG]", error);
+    log("error", "Purge event log failed", { route: ROUTE, error });
     return NextResponse.json({ error: "purge_failed" }, { status: 500 });
   }
 

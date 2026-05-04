@@ -11,6 +11,7 @@
 
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { log } from "@/lib/logger";
 
 type LimitResult = {
   success: boolean;
@@ -30,7 +31,7 @@ let redis: Redis | null = null;
 try {
   redis = Redis.fromEnv();
 } catch (err) {
-  console.error("[RATE_LIMIT] Redis.fromEnv() failed; rate limiting disabled (fail-open)", err);
+  log("error", "Redis.fromEnv() failed, rate limiting disabled (fail-open)", { errorCode: "redis_init_failed", error: err });
 }
 
 function makeLimiter(
@@ -87,7 +88,7 @@ export async function checkRateLimit(
       remaining: result.remaining,
     };
   } catch (err) {
-    console.error(`[RATE_LIMIT] ${limiterKey} limit() failed for ${identifier}; failing open`, err);
+    log("error", "Rate limiter call failed, failing open", { errorCode: "redis_call_failed", limiterKey, identifier, error: err });
     return FAIL_OPEN_RESULT;
   }
 }

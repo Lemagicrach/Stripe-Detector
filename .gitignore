@@ -52,3 +52,6 @@ supabase/.branches/
 # Local dev/build logs
 *-dev.log
 *-build.log
+
+# Sentry Config File
+.env.sentry-build-plugin

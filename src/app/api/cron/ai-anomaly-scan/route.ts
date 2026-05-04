@@ -3,6 +3,10 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { handleApiError } from "@/lib/server-error";
 import { verifyCronAuth } from "@/lib/cron-auth";
+import { log } from "@/lib/logger";
+import { pingHealthcheck } from "@/lib/healthcheck";
+
+const ROUTE = "/api/cron/ai-anomaly-scan";
 
 export const maxDuration = 300;
 
@@ -18,7 +22,7 @@ async function analyzeWithAI(
 ): Promise<AnomalySignal[]> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    console.warn("[CRON_AI_ANOMALY] ANTHROPIC_API_KEY not set — skipping AI analysis");
+    log("warn", "ANTHROPIC_API_KEY not set, skipping AI analysis", { route: ROUTE });
     return [];
   }
 
@@ -58,7 +62,7 @@ Return only valid JSON, no markdown, no explanation outside the array.`;
         typeof item.description === "string"
     );
   } catch {
-    console.error("[CRON_AI_ANOMALY] Failed to parse AI response:", content.text);
+    log("error", "Failed to parse AI response", { route: ROUTE, body: content.text });
     return [];
   }
 }
@@ -66,6 +70,9 @@ Return only valid JSON, no markdown, no explanation outside the array.`;
 export async function GET(request: Request) {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
+
+  const HC = process.env.HC_AI_ANOMALY_URL;
+  await pingHealthcheck(HC, "start");
 
   try {
     const admin = getSupabaseAdminClient();
@@ -76,6 +83,7 @@ export async function GET(request: Request) {
       .eq("status", "active");
 
     if (!connections?.length) {
+      await pingHealthcheck(HC);
       return NextResponse.json({ success: true, processed: 0 });
     }
 
@@ -112,12 +120,14 @@ export async function GET(request: Request) {
 
         processed++;
       } catch (err) {
-        console.error(`[CRON_AI_ANOMALY] Failed for connection ${conn.id}:`, err);
+        log("error", "Cron iteration failed", { route: ROUTE, connectionId: conn.id, error: err });
       }
     }
 
+    await pingHealthcheck(HC);
     return NextResponse.json({ success: true, processed, signalsCreated });
   } catch (error) {
+    await pingHealthcheck(HC, "fail");
     return handleApiError(error, "CRON_AI_ANOMALY");
   }
 }

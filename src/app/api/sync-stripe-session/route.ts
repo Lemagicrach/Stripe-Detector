@@ -6,6 +6,7 @@ import { detectRevenueLeaks } from "@/lib/revenue-leaks";
 import { buildRevenueSignals, GENERATED_SYNC_SIGNAL_TYPES } from "@/lib/revenue-signals";
 import { handleApiError, unauthorized, badRequest, rateLimited } from "@/lib/server-error";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { log } from "@/lib/logger";
 
 async function runSync() {
   try {
@@ -158,7 +159,7 @@ async function runSync() {
     });
 
     if (usageError) {
-      console.warn('[SYNC_STRIPE_SESSION] usage event "stripe_sync" failed:', usageError.message);
+      log("warn", "Usage event insert failed", { route: "/api/sync-stripe-session", userId: user.id, eventType: "stripe_sync", error: usageError });
     }
 
     const summary = [

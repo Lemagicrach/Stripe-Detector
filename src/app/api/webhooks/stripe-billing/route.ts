@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripeServerClient, getSupabaseAdminClient } from "@/lib/server-clients";
 import { planFromPriceId } from "@/lib/stripe";
+import { log } from "@/lib/logger";
 import type Stripe from "stripe";
+
+const ROUTE = "/api/webhooks/stripe-billing";
 
 
 export async function POST(req: NextRequest) {
@@ -19,7 +22,7 @@ export async function POST(req: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
   } catch (err) {
-    console.error("Stripe webhook signature verification failed:", err);
+    log("error", "Webhook signature verification failed", { route: ROUTE, error: err });
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
@@ -33,7 +36,7 @@ export async function POST(req: NextRequest) {
     if ((dedupError as { code?: string }).code === "23505") {
       return NextResponse.json({ received: true, deduped: true });
     }
-    console.error("[STRIPE_BILLING_WEBHOOK] dedup insert failed", dedupError);
+    log("error", "Dedup insert failed", { route: ROUTE, eventId: event.id, error: dedupError });
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 
@@ -101,7 +104,7 @@ export async function POST(req: NextRequest) {
         break;
     }
   } catch (err) {
-    console.error(`Error handling webhook event ${event.type}:`, err);
+    log("error", "Webhook handler failed", { route: ROUTE, eventId: event.id, eventType: event.type, error: err });
     // Return 200 so Stripe doesn't retry - log the failure instead
   }
 

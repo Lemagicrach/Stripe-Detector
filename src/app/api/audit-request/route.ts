@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendViaResend } from "@/lib/resend";
 import { checkRateLimit, clientIdentifier } from "@/lib/rate-limit";
+import { log } from "@/lib/logger";
 import { badRequest, handleApiError, rateLimited } from "@/lib/server-error";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
 import {
@@ -143,7 +144,7 @@ export async function POST(request: NextRequest) {
 
     const emailDeliveryOk = emailResults.every((result) => result.status === "fulfilled");
     if (!emailDeliveryOk) {
-      console.error("AUDIT_REQUEST_EMAIL", emailResults);
+      log("error", "Audit request email failed", { route: "/api/audit-request", emailResults });
     }
 
     return NextResponse.json({

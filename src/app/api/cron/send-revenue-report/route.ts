@@ -3,6 +3,10 @@ import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { sendViaResend } from "@/lib/resend";
 import { handleApiError } from "@/lib/server-error";
 import { verifyCronAuth } from "@/lib/cron-auth";
+import { log } from "@/lib/logger";
+import { pingHealthcheck } from "@/lib/healthcheck";
+
+const ROUTE = "/api/cron/send-revenue-report";
 
 export const maxDuration = 120;
 
@@ -97,6 +101,9 @@ export async function GET(request: Request) {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
 
+  const HC = process.env.HC_SEND_REPORT_URL;
+  await pingHealthcheck(HC, "start");
+
   try {
     const admin = getSupabaseAdminClient();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://corvidet.com";
@@ -108,6 +115,7 @@ export async function GET(request: Request) {
       .eq("status", "active");
 
     if (!connections?.length) {
+      await pingHealthcheck(HC);
       return NextResponse.json({ success: true, sent: 0 });
     }
 
@@ -177,12 +185,14 @@ export async function GET(request: Request) {
         sent++;
       } catch (err) {
         errors++;
-        console.error(`[CRON_REPORT] Failed for user ${userId}:`, err);
+        log("error", "Revenue report send failed", { route: ROUTE, userId, error: err });
       }
     }
 
+    await pingHealthcheck(HC);
     return NextResponse.json({ success: true, sent, errors, total: perUser.size });
   } catch (error) {
+    await pingHealthcheck(HC, "fail");
     return handleApiError(error, "CRON_REPORT");
   }
 }

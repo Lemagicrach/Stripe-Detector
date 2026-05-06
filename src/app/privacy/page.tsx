@@ -52,6 +52,25 @@ export default function PrivacyPage() {
             <p>You can request a copy of your data, ask us to delete your account, or disconnect Stripe at any time. To exercise these rights, email us at <a href="mailto:privacy@corvidet.com" className="text-[#E8442A] hover:underline">privacy@corvidet.com</a>.</p>
           </section>
 
+          <section id="delete-account">
+            <h2 className="mb-3 text-lg font-semibold text-[#E8ECF1]">How to delete your account and all associated data</h2>
+            <p>You can permanently delete your Corvidet account directly from the dashboard at any time. Under GDPR Article 17 (right to erasure), this is a self-service action — no support ticket required.</p>
+            <ol className="mt-3 ml-4 list-decimal space-y-1.5">
+              <li>Sign in to your account.</li>
+              <li>Go to <Link href="/dashboard/settings" className="text-[#E8442A] hover:underline">dashboard settings</Link> and scroll to the <em>Danger zone</em> section.</li>
+              <li>Click <strong className="text-[#E8ECF1]">Delete my account</strong>, type your email exactly to confirm, and submit.</li>
+            </ol>
+            <p className="mt-3">When you delete your account, we immediately:</p>
+            <ul className="mt-2 ml-4 list-disc space-y-1.5">
+              <li>Revoke our Stripe Connect authorization (you can verify this in your Stripe dashboard under <em>Connected apps</em>).</li>
+              <li>Cancel any active Corvidet billing subscription.</li>
+              <li>Delete your Supabase auth record, which cascades through every table containing your data: revenue metrics, leak detections, recovery events, monthly reports, usage events, and connection records.</li>
+              <li>Send you a confirmation email at the address on file.</li>
+            </ul>
+            <p className="mt-3">We retain a single tamper-evident audit row containing a SHA-256 hash of your email (never the plaintext) and the deletion timestamp. This is required to demonstrate compliance during legal audits and contains no personally identifiable information.</p>
+            <p className="mt-3">If something goes wrong, contact <a href="mailto:privacy@corvidet.com" className="text-[#E8442A] hover:underline">privacy@corvidet.com</a> and we will manually verify and complete the deletion within 30 days.</p>
+          </section>
+
           <section>
             <h2 className="mb-3 text-lg font-semibold text-[#E8ECF1]">Cookies</h2>
             <p>We use session cookies managed by Supabase Auth for authentication only. We do not use advertising or tracking cookies.</p>

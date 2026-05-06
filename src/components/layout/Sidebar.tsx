@@ -51,7 +51,7 @@ const insightsNav: NavItem[] = [
 const accountNav: NavItem[] = [
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
   { href: "/dashboard/connect", label: "Connect", icon: Link2 },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings, comingSoon: true },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 function NavLink({ href, label, icon: Icon, comingSoon, isActive }: NavItem & { isActive: boolean }) {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MarketingFooter } from "@/components/marketing/footer";
 
 export const metadata = {
   title: "Privacy Policy - Corvidet",
@@ -88,12 +89,7 @@ export default function PrivacyPage() {
         </div>
       </div>
 
-      <footer className="border-t border-[#1E2530] px-6 py-8 text-center text-xs text-[#5A6575]">
-        © 2026 Corvidet ·{" "}
-        <Link href="/" className="transition-colors hover:text-[#8B95A5]">Home</Link>
-        {" · "}
-        <Link href="/contact" className="transition-colors hover:text-[#8B95A5]">Contact</Link>
-      </footer>
+      <MarketingFooter />
     </main>
   );
 }

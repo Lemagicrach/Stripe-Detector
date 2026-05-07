@@ -268,6 +268,18 @@ function LoginForm() {
               <p className="mt-6 text-center text-[0.7rem] leading-relaxed text-gray-500">
                 No password needed. We&apos;ll email you a secure login link.
               </p>
+
+              <p className="mt-3 text-center text-[0.7rem] leading-relaxed text-gray-500">
+                By continuing, you agree to our{" "}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-gray-300 underline underline-offset-2 hover:text-gray-100">
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-gray-300 underline underline-offset-2 hover:text-gray-100">
+                  Privacy Policy
+                </a>
+                .
+              </p>
             </>
           )}
         </CardContent>

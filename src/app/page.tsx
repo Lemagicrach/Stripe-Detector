@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { MarketingFooter } from "@/components/marketing/footer";
 import {
   AlertTriangle,
   ArrowRight,
@@ -533,22 +534,7 @@ export default async function LandingPage({
         </div>
       </section>
 
-      <footer className="border-t border-[#1E2530] px-6 py-8 text-center text-xs text-[#5A6575]">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 md:flex-row">
-          <p>Copyright 2026 Corvidet</p>
-          <div className="flex items-center gap-4">
-            <Link href="/audit" className="transition-colors hover:text-[#8B95A5]">
-              Request audit
-            </Link>
-            <Link href="/privacy" className="transition-colors hover:text-[#8B95A5]">
-              Privacy
-            </Link>
-            <Link href="/contact" className="transition-colors hover:text-[#8B95A5]">
-              Contact
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <MarketingFooter />
     </main>
   );
 }

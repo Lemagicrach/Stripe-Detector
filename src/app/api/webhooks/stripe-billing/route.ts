@@ -1,8 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripeServerClient, getSupabaseAdminClient } from "@/lib/server-clients";
 import { planFromPriceId } from "@/lib/stripe";
+import { sendViaResend } from "@/lib/resend";
 import { log } from "@/lib/logger";
 import type Stripe from "stripe";
+
+function buildTrialEndingEmail(trialEndsAt: Date, billingUrl: string): string {
+  const formatted = trialEndsAt.toLocaleDateString("en-US", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
+  });
+  return `<!DOCTYPE html>
+<html>
+  <body style="font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a;padding:24px;">
+    <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:28px;">
+      <h1 style="margin:0 0 16px;font-size:22px;">Your Corvidet Growth trial ends in 3 days</h1>
+      <p style="margin:0 0 12px;line-height:1.6;">Your trial ends on <strong>${formatted}</strong>. To keep your Growth features, add a payment method before then:</p>
+      <p style="margin:20px 0;text-align:center;">
+        <a href="${billingUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">Add payment method</a>
+      </p>
+      <p style="margin:0 0 12px;line-height:1.6;color:#64748b;font-size:14px;">If you don't add a card, your account will revert to the free plan automatically — no charge, no surprises.</p>
+      <p style="margin:24px 0 0;color:#64748b;font-size:13px;">— Corvidet</p>
+    </div>
+  </body>
+</html>`;
+}
 
 const ROUTE = "/api/webhooks/stripe-billing";
 
@@ -72,7 +93,39 @@ export async function POST(req: NextRequest) {
 
         const userId = (profile as { id: string } | null)?.id;
         if (userId) {
-          await admin.from("user_profiles").update({ plan }).eq("id", userId);
+          // Mirror Stripe's trial_end onto the profile so the dashboard banner
+          // can render without round-tripping to Stripe. Cleared once the
+          // trial transitions to active billing (sub.trial_end becomes null).
+          const trialEndsAt = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
+          await admin.from("user_profiles").update({ plan, trial_ends_at: trialEndsAt }).eq("id", userId);
+        }
+        break;
+      }
+
+      case "customer.subscription.trial_will_end": {
+        const sub = event.data.object as Stripe.Subscription;
+        const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+        if (!sub.trial_end) break;
+
+        const { data: profile } = await admin
+          .from("user_profiles")
+          .select("id, email")
+          .eq("stripe_customer_id", customerId)
+          .single();
+
+        const profileRow = profile as { id?: string; email?: string } | null;
+        if (!profileRow?.email) break;
+
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://corvidet.com";
+        const trialEndsAt = new Date(sub.trial_end * 1000);
+        try {
+          await sendViaResend({
+            to: profileRow.email,
+            subject: "Your Corvidet Growth trial ends in 3 days",
+            html: buildTrialEndingEmail(trialEndsAt, `${appUrl}/dashboard/billing`),
+          });
+        } catch (emailErr) {
+          log("warn", "Trial ending email failed", { route: ROUTE, userId: profileRow.id, error: emailErr });
         }
         break;
       }
@@ -89,11 +142,19 @@ export async function POST(req: NextRequest) {
 
         const userId = (profile as { id: string } | null)?.id;
         if (userId) {
-          await admin.from("user_profiles").update({ plan: "free" }).eq("id", userId);
+          // If the sub was canceled while still in trial, the user never
+          // converted; record that in the audit metadata for funnel analysis.
+          const wasTrialing = sub.status === "trialing" || sub.trial_end !== null;
+          await admin.from("user_profiles")
+            .update({ plan: "free", trial_ends_at: null })
+            .eq("id", userId);
           await admin.from("usage_events").insert({
             user_id: userId,
             event_type: "plan_downgraded",
-            metadata: { plan: "free", reason: "subscription_deleted" },
+            metadata: {
+              plan: "free",
+              reason: wasTrialing ? "trial_expired_no_payment" : "subscription_deleted",
+            },
           });
         }
         break;

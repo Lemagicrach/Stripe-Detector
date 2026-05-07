@@ -4,6 +4,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { handleApiError, unauthorized, badRequest, rateLimited } from "@/lib/server-error";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { computeAiCostCents } from "@/lib/ai-pricing";
 import { log } from "@/lib/logger";
 import { PLAN_LIMITS, type PlanTier } from "@/lib/stripe";
 
@@ -43,22 +44,33 @@ export async function GET() {
       .eq("id", user.id)
       .single();
     const plan = ((profileRaw as { plan?: string } | null)?.plan ?? "free") as PlanTier;
-    const limit = PLAN_LIMITS[plan]?.aiQueriesPerMonth ?? PLAN_LIMITS.free.aiQueriesPerMonth;
+    const planConfig = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
+    const limit = planConfig.aiQueriesPerMonth;
+    const maxCostCents = planConfig.aiMaxCostCentsPerMonth;
 
-    const { data: quotaAllowed, error: quotaError } = await admin.rpc(
+    const { data: quotaResult, error: quotaError } = await admin.rpc(
       "increment_ai_usage_if_allowed",
-      { p_user_id: user.id, p_plan_limit: limit }
+      { p_user_id: user.id, p_plan_limit: limit, p_max_cost_cents: maxCostCents }
     );
     if (quotaError) {
       log("error", "Quota RPC failed", { route: "/api/ai/analyze", userId: user.id, error: quotaError });
       return badRequest("Quota check failed");
     }
-    if (!quotaAllowed) {
+    const quota = quotaResult as { allowed?: boolean; event_id?: string; reason?: string } | null;
+    if (!quota?.allowed) {
       return NextResponse.json(
-        { error: "Monthly AI query limit reached", plan, limit, upgradeUrl: "/dashboard/billing" },
+        {
+          error: quota?.reason === "cost_limit" ? "Monthly AI cost limit reached" : "Monthly AI query limit reached",
+          plan,
+          limit,
+          maxCostCents,
+          reason: quota?.reason,
+          upgradeUrl: "/dashboard/billing",
+        },
         { status: 402 }
       );
     }
+    const usageEventId = quota.event_id ?? null;
 
     const { data: connectionRaw } = await admin.from("stripe_connections").select("id")
       .eq("user_id", user.id).eq("status", "active").limit(1).single();
@@ -91,6 +103,35 @@ Be specific with numbers. Be direct.`;
 
     const data = await response.json();
     const text = data.content?.map((c: any) => c.text || "").join("") || "Analysis unavailable.";
+
+    // Backfill cost_cents on the usage_events row this request created.
+    const inputTokens = data.usage?.input_tokens ?? 0;
+    const outputTokens = data.usage?.output_tokens ?? 0;
+    if (usageEventId && (inputTokens > 0 || outputTokens > 0)) {
+      const costCents = computeAiCostCents(inputTokens, outputTokens);
+      try {
+        await admin
+          .from("usage_events")
+          .update({
+            metadata: {
+              used: null,
+              limit,
+              input_tokens: inputTokens,
+              output_tokens: outputTokens,
+              cost_cents: costCents,
+            },
+          })
+          .eq("id", usageEventId);
+      } catch (updateErr) {
+        log("warn", "Failed to backfill cost_cents", {
+          route: "/api/ai/analyze",
+          userId: user.id,
+          usageEventId,
+          error: updateErr,
+        });
+      }
+    }
+
     return NextResponse.json({ analysis: text });
   } catch (error) {
     return handleApiError(error, "AI_ANALYZE");

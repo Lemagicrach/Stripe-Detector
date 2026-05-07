@@ -4,6 +4,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { handleApiError, unauthorized, badRequest, rateLimited } from "@/lib/server-error";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { computeAiCostCents } from "@/lib/ai-pricing";
 import { log } from "@/lib/logger";
 import { PLAN_LIMITS, type PlanTier } from "@/lib/stripe";
 
@@ -118,22 +119,33 @@ export async function POST(req: NextRequest) {
       .eq("id", user.id)
       .single();
     const plan = ((profileRaw as { plan?: string } | null)?.plan ?? "free") as PlanTier;
-    const limit = PLAN_LIMITS[plan]?.aiQueriesPerMonth ?? PLAN_LIMITS.free.aiQueriesPerMonth;
+    const planConfig = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
+    const limit = planConfig.aiQueriesPerMonth;
+    const maxCostCents = planConfig.aiMaxCostCentsPerMonth;
 
-    const { data: quotaAllowed, error: quotaError } = await admin.rpc(
+    const { data: quotaResult, error: quotaError } = await admin.rpc(
       "increment_ai_usage_if_allowed",
-      { p_user_id: user.id, p_plan_limit: limit }
+      { p_user_id: user.id, p_plan_limit: limit, p_max_cost_cents: maxCostCents }
     );
     if (quotaError) {
       log("error", "Quota RPC failed", { route: "/api/ai/copilot", userId: user.id, error: quotaError });
       return badRequest("Quota check failed");
     }
-    if (!quotaAllowed) {
+    const quota = quotaResult as { allowed?: boolean; event_id?: string; reason?: string } | null;
+    if (!quota?.allowed) {
       return NextResponse.json(
-        { error: "Monthly AI query limit reached", plan, limit, upgradeUrl: "/dashboard/billing" },
+        {
+          error: quota?.reason === "cost_limit" ? "Monthly AI cost limit reached" : "Monthly AI query limit reached",
+          plan,
+          limit,
+          maxCostCents,
+          reason: quota?.reason,
+          upgradeUrl: "/dashboard/billing",
+        },
         { status: 402 }
       );
     }
+    const usageEventId = quota.event_id ?? null;
 
     const { data: connectionRaw } = await admin
       .from("stripe_connections").select("id")
@@ -176,32 +188,66 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "AI service error" }, { status: 502 });
     }
 
-    // Proxy SSE stream
+    // Proxy SSE stream + accumulate Anthropic token usage so we can
+    // backfill cost_cents on the usage_events row this request created.
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
         const reader = response.body!.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
+        let inputTokens = 0;
+        let outputTokens = 0;
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) { controller.enqueue(encoder.encode("data: [DONE]\n\n")); controller.close(); break; }
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) { controller.enqueue(encoder.encode("data: [DONE]\n\n")); controller.close(); break; }
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
 
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                if (data.type === "content_block_delta" && data.delta?.text) {
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: data.delta.text })}\n\n`));
-                } else if (data.type === "message_stop") {
-                  controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-                }
-              } catch { /* skip non-JSON lines */ }
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+                  if (data.type === "content_block_delta" && data.delta?.text) {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: data.delta.text })}\n\n`));
+                  } else if (data.type === "message_start" && data.message?.usage?.input_tokens) {
+                    inputTokens = data.message.usage.input_tokens;
+                  } else if (data.type === "message_delta" && data.usage?.output_tokens) {
+                    outputTokens = data.usage.output_tokens;
+                  } else if (data.type === "message_stop") {
+                    controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+                  }
+                } catch { /* skip non-JSON lines */ }
+              }
+            }
+          }
+        } finally {
+          if (usageEventId && (inputTokens > 0 || outputTokens > 0)) {
+            const costCents = computeAiCostCents(inputTokens, outputTokens);
+            try {
+              await admin
+                .from("usage_events")
+                .update({
+                  metadata: {
+                    used: null,
+                    limit,
+                    input_tokens: inputTokens,
+                    output_tokens: outputTokens,
+                    cost_cents: costCents,
+                  },
+                })
+                .eq("id", usageEventId);
+            } catch (updateErr) {
+              log("warn", "Failed to backfill cost_cents", {
+                route: "/api/ai/copilot",
+                userId: user.id,
+                usageEventId,
+                error: updateErr,
+              });
             }
           }
         }

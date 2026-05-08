@@ -10,6 +10,8 @@ import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { handleApiError } from "@/lib/server-error";
 import { log } from "@/lib/logger";
 import { pingHealthcheck } from "@/lib/healthcheck";
+import { notifyUserOnSlack, buildMonthlyReportReady } from "@/lib/slack";
+import { PLAN_LIMITS, type PlanTier } from "@/lib/stripe";
 
 const ROUTE = "/api/cron/run-monthly-health";
 
@@ -65,6 +67,22 @@ async function runMonthlyHealth(request: Request) {
           emailSent = true;
         } catch (emailError) {
           log("error", "Monthly health email failed", { route: ROUTE, connectionId: connection.id, userId: connection.user_id, error: emailError });
+        }
+
+        // Slack notification (Business plan only)
+        const { data: profile } = await admin
+          .from("user_profiles").select("plan").eq("id", connection.user_id).single();
+        const userPlan = ((profile as { plan?: string } | null)?.plan ?? "free") as PlanTier;
+        if (PLAN_LIMITS[userPlan].slackAlerts) {
+          await notifyUserOnSlack(
+            connection.user_id,
+            buildMonthlyReportReady({
+              periodLabel: report.period,
+              totalRevenueUsd: report.totalRevenue,
+              failedPaymentsUsd: report.failedPaymentsAmount,
+              reportUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://corvidet.com"}/dashboard/reports`,
+            })
+          );
         }
 
         results.push({

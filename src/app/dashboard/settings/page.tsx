@@ -29,12 +29,20 @@ export default async function Page() {
             <dd className="mt-1 font-mono text-xs text-gray-300">{user.id}</dd>
           </div>
         </dl>
-        <Link
-          href="/dashboard/settings/activity"
-          className="mt-5 inline-flex items-center text-sm text-blue-400 hover:text-blue-300"
-        >
-          View activity log →
-        </Link>
+        <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2">
+          <Link
+            href="/dashboard/settings/activity"
+            className="inline-flex items-center text-sm text-blue-400 hover:text-blue-300"
+          >
+            View activity log →
+          </Link>
+          <Link
+            href="/dashboard/settings/integrations"
+            className="inline-flex items-center text-sm text-blue-400 hover:text-blue-300"
+          >
+            Manage integrations →
+          </Link>
+        </div>
       </div>
 
       {userEmail && <DangerZone userEmail={userEmail} />}

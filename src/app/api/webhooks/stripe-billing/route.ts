@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripeServerClient, getSupabaseAdminClient } from "@/lib/server-clients";
-import { planFromPriceId } from "@/lib/stripe";
+import { planFromPriceId, PLAN_LIMITS, type PlanTier } from "@/lib/stripe";
 import { sendViaResend } from "@/lib/resend";
 import { log } from "@/lib/logger";
 import { audit } from "@/lib/audit";
+import { notifyUserOnSlack, buildTrialEndingSoon } from "@/lib/slack";
 import type Stripe from "stripe";
 
 function buildTrialEndingEmail(trialEndsAt: Date, billingUrl: string): string {
@@ -124,23 +125,35 @@ export async function POST(req: NextRequest) {
 
         const { data: profile } = await admin
           .from("user_profiles")
-          .select("id, email")
+          .select("id, email, plan")
           .eq("stripe_customer_id", customerId)
           .single();
 
-        const profileRow = profile as { id?: string; email?: string } | null;
+        const profileRow = profile as { id?: string; email?: string; plan?: string } | null;
         if (!profileRow?.email) break;
 
         const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://corvidet.com";
+        const billingUrl = `${appUrl}/dashboard/billing`;
         const trialEndsAt = new Date(sub.trial_end * 1000);
         try {
           await sendViaResend({
             to: profileRow.email,
             subject: "Your Corvidet Growth trial ends in 3 days",
-            html: buildTrialEndingEmail(trialEndsAt, `${appUrl}/dashboard/billing`),
+            html: buildTrialEndingEmail(trialEndsAt, billingUrl),
           });
         } catch (emailErr) {
           log("warn", "Trial ending email failed", { route: ROUTE, userId: profileRow.id, error: emailErr });
+        }
+
+        // Slack notification (Business plan only — though trials are typically
+        // for Growth, this hooks correctly when a Business user is in trial).
+        const userPlan = (profileRow.plan ?? "free") as PlanTier;
+        if (profileRow.id && PLAN_LIMITS[userPlan].slackAlerts) {
+          const daysLeft = Math.max(1, Math.ceil((trialEndsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+          await notifyUserOnSlack(
+            profileRow.id,
+            buildTrialEndingSoon({ daysLeft, billingUrl })
+          );
         }
         break;
       }

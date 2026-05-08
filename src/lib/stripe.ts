@@ -24,6 +24,7 @@ export const PLAN_LIMITS = {
     continuousMonitoring: false,
     customReports: false,
     prioritySupport: false,
+    slackAlerts: false,
     stripePriceId: null as string | null,
   },
   growth: {
@@ -36,6 +37,7 @@ export const PLAN_LIMITS = {
     continuousMonitoring: true,
     customReports: false,
     prioritySupport: false,
+    slackAlerts: false,
     stripePriceId: process.env.STRIPE_GROWTH_PRICE_ID ?? null,
   },
   business: {
@@ -48,6 +50,7 @@ export const PLAN_LIMITS = {
     continuousMonitoring: true,
     customReports: true,
     prioritySupport: true,
+    slackAlerts: true,             // Business-only: real-time leak alerts to Slack
     stripePriceId: process.env.STRIPE_BUSINESS_PRICE_ID ?? null,
   },
 } as const satisfies Record<PlanTier, {
@@ -60,6 +63,7 @@ export const PLAN_LIMITS = {
   continuousMonitoring: boolean;
   customReports: boolean;
   prioritySupport: boolean;
+  slackAlerts: boolean;
   stripePriceId: string | null;
 }>;
 

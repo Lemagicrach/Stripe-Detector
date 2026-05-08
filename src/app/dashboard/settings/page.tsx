@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { DangerZone } from "./danger-zone";
@@ -28,6 +29,12 @@ export default async function Page() {
             <dd className="mt-1 font-mono text-xs text-gray-300">{user.id}</dd>
           </div>
         </dl>
+        <Link
+          href="/dashboard/settings/activity"
+          className="mt-5 inline-flex items-center text-sm text-blue-400 hover:text-blue-300"
+        >
+          View activity log →
+        </Link>
       </div>
 
       {userEmail && <DangerZone userEmail={userEmail} />}

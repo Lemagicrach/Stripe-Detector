@@ -6,6 +6,7 @@ import { handleApiError, unauthorized, badRequest, rateLimited } from "@/lib/ser
 import { checkRateLimit } from "@/lib/rate-limit";
 import { computeAiCostCents } from "@/lib/ai-pricing";
 import { log } from "@/lib/logger";
+import { audit } from "@/lib/audit";
 import { PLAN_LIMITS, type PlanTier } from "@/lib/stripe";
 
 type CurrentMetrics = {
@@ -146,6 +147,15 @@ export async function POST(req: NextRequest) {
       );
     }
     const usageEventId = quota.event_id ?? null;
+
+    await audit({
+      userId: user.id,
+      action: "ai.query",
+      resource_type: "ai_query",
+      resource_id: usageEventId,
+      request: req,
+      meta: { route: "copilot" },
+    });
 
     const { data: connectionRaw } = await admin
       .from("stripe_connections").select("id")

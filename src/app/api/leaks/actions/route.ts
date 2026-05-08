@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { handleApiError, unauthorized, badRequest } from "@/lib/server-error";
+import { audit } from "@/lib/audit";
 
 export async function GET() {
   try {
@@ -30,6 +31,17 @@ export async function PATCH(req: NextRequest) {
     const update: Record<string, any> = { status };
     if (status === "resolved") update.resolved_at = new Date().toISOString();
     await admin.from("revenue_leaks").update(update).eq("id", leakId).eq("user_id", user.id);
+
+    if (status === "dismissed") {
+      await audit({
+        userId: user.id,
+        action: "leak.dismissed",
+        resource_type: "revenue_leak",
+        resource_id: leakId,
+        request: req,
+      });
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) { return handleApiError(error, "LEAKS_UPDATE"); }
 }

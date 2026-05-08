@@ -5,6 +5,7 @@ import { encrypt } from "@/lib/encryption";
 import { handleApiError, unauthorized, badRequest, rateLimited } from "@/lib/server-error";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { log } from "@/lib/logger";
+import { audit } from "@/lib/audit";
 
 function getAppUrl() {
   return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -143,6 +144,15 @@ export async function GET(req: NextRequest) {
       await trackUsageEvent(user.id, "stripe_connected", {
         connection_id: (conn as { id: string }).id,
         account_id: oauth.stripe_user_id,
+      });
+
+      await audit({
+        userId: user.id,
+        action: "stripe.connect.connected",
+        resource_type: "stripe_connection",
+        resource_id: (conn as { id: string }).id,
+        request: req,
+        meta: { account_id: oauth.stripe_user_id },
       });
 
       const successResponse = redirectToConnect("success", { account: oauth.stripe_user_id });

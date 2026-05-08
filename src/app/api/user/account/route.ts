@@ -24,6 +24,7 @@ import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { sendViaResend } from "@/lib/resend";
 import { handleApiError, unauthorized, badRequest } from "@/lib/server-error";
 import { log } from "@/lib/logger";
+import { audit } from "@/lib/audit";
 
 const ROUTE = "/api/user/account";
 const STRIPE_API_VERSION = "2026-02-25.clover" as const;
@@ -135,6 +136,17 @@ export async function DELETE(req: NextRequest) {
       });
       return handleApiError(auditError, "ACCOUNT_DELETE_AUDIT");
     }
+
+    // Audit log entry (cascades when user is deleted at step 6, but worth it
+    // for the brief window where support may need to verify the request).
+    await audit({
+      userId: user.id,
+      action: "account.deleted",
+      resource_type: "user",
+      resource_id: user.id,
+      request: req,
+      meta: { reason: body.reason ?? null, email_hash: emailHash },
+    });
 
     // Step 6: Hard-delete the auth.users row (cascades through public schema)
     const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);

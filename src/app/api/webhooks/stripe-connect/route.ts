@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient, getStripeServerClient } from "@/lib/server-clients";
 import { log } from "@/lib/logger";
+import { audit } from "@/lib/audit";
 import type Stripe from "stripe";
 
 const ROUTE = "/api/webhooks/stripe-connect";
@@ -45,10 +46,22 @@ export async function POST(req: NextRequest) {
       case "account.application.deauthorized": {
         const account = event.account;
         if (account) {
-          await admin
+          const { data: conn } = await admin
             .from("stripe_connections")
             .update({ status: "disconnected" })
-            .eq("stripe_account_id", account);
+            .eq("stripe_account_id", account)
+            .select("id, user_id")
+            .single();
+
+          if (conn) {
+            await audit({
+              userId: (conn as { user_id: string }).user_id,
+              action: "stripe.connect.disconnected",
+              resource_type: "stripe_connection",
+              resource_id: (conn as { id: string }).id,
+              meta: { account_id: account, source: "stripe_webhook" },
+            });
+          }
         }
         break;
       }

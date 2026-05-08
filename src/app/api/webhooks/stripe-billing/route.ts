@@ -3,6 +3,7 @@ import { getStripeServerClient, getSupabaseAdminClient } from "@/lib/server-clie
 import { planFromPriceId } from "@/lib/stripe";
 import { sendViaResend } from "@/lib/resend";
 import { log } from "@/lib/logger";
+import { audit } from "@/lib/audit";
 import type Stripe from "stripe";
 
 function buildTrialEndingEmail(trialEndsAt: Date, billingUrl: string): string {
@@ -87,17 +88,31 @@ export async function POST(req: NextRequest) {
         const plan = planFromPriceId(priceId);
         const { data: profile } = await admin
           .from("user_profiles")
-          .select("id")
+          .select("id, plan")
           .eq("stripe_customer_id", customerId)
           .single();
 
-        const userId = (profile as { id: string } | null)?.id;
+        const profileRow = profile as { id: string; plan: string } | null;
+        const userId = profileRow?.id;
         if (userId) {
+          const previousPlan = profileRow.plan;
           // Mirror Stripe's trial_end onto the profile so the dashboard banner
           // can render without round-tripping to Stripe. Cleared once the
           // trial transitions to active billing (sub.trial_end becomes null).
           const trialEndsAt = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
           await admin.from("user_profiles").update({ plan, trial_ends_at: trialEndsAt }).eq("id", userId);
+
+          // Audit only on actual plan changes (Stripe fires subscription.updated
+          // for many no-op reasons: invoice.created, billing_cycle_anchor, etc.)
+          if (plan !== previousPlan) {
+            await audit({
+              userId,
+              action: plan === "free" ? "subscription.downgraded" : "subscription.upgraded",
+              resource_type: "subscription",
+              resource_id: sub.id,
+              meta: { from: previousPlan, to: plan, source: "stripe_webhook" },
+            });
+          }
         }
         break;
       }
@@ -145,16 +160,21 @@ export async function POST(req: NextRequest) {
           // If the sub was canceled while still in trial, the user never
           // converted; record that in the audit metadata for funnel analysis.
           const wasTrialing = sub.status === "trialing" || sub.trial_end !== null;
+          const reason = wasTrialing ? "trial_expired_no_payment" : "subscription_deleted";
           await admin.from("user_profiles")
             .update({ plan: "free", trial_ends_at: null })
             .eq("id", userId);
           await admin.from("usage_events").insert({
             user_id: userId,
             event_type: "plan_downgraded",
-            metadata: {
-              plan: "free",
-              reason: wasTrialing ? "trial_expired_no_payment" : "subscription_deleted",
-            },
+            metadata: { plan: "free", reason },
+          });
+          await audit({
+            userId,
+            action: "subscription.downgraded",
+            resource_type: "subscription",
+            resource_id: sub.id,
+            meta: { to: "free", reason, source: "stripe_webhook" },
           });
         }
         break;

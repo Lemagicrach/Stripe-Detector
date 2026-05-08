@@ -14,39 +14,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
 import { verifyCronAuth } from "@/lib/cron-auth";
-import { sendViaResend } from "@/lib/resend";
+import { sendEmail } from "@/lib/email";
+import { BudgetWarning } from "@/emails/BudgetWarning";
 import { log } from "@/lib/logger";
 import { pingHealthcheck } from "@/lib/healthcheck";
 import { PLAN_LIMITS, type PlanTier } from "@/lib/stripe";
 
 const ROUTE = "/api/cron/check-ai-budget";
 const WARN_AT_PERCENT = 80;
-
-function buildBudgetWarningEmail(
-  plan: PlanTier,
-  spentCents: number,
-  capCents: number,
-  percent: number,
-  billingUrl: string
-): string {
-  const spentDollars = (spentCents / 100).toFixed(2);
-  const capDollars = (capCents / 100).toFixed(2);
-  return `<!DOCTYPE html>
-<html>
-  <body style="font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a;padding:24px;">
-    <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:28px;">
-      <h1 style="margin:0 0 16px;font-size:22px;">You're at ${percent}% of this month's AI budget</h1>
-      <p style="margin:0 0 12px;line-height:1.6;">Your <strong>${plan}</strong> plan includes up to <strong>$${capDollars}</strong> of AI usage per calendar month. You've used <strong>$${spentDollars}</strong> so far.</p>
-      <p style="margin:0 0 12px;line-height:1.6;">If you hit 100%, AI features (copilot and analyze) will return an error until your usage resets at the start of next month. Upgrade to keep going without interruption:</p>
-      <p style="margin:20px 0;text-align:center;">
-        <a href="${billingUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">Upgrade plan</a>
-      </p>
-      <p style="margin:0;line-height:1.6;color:#64748b;font-size:14px;">No action required — your existing usage is unaffected. This is a courtesy heads-up so you don't get cut off mid-month.</p>
-      <p style="margin:24px 0 0;color:#64748b;font-size:13px;">— Corvidet</p>
-    </div>
-  </body>
-</html>`;
-}
 
 export async function GET(req: NextRequest) {
   const authError = verifyCronAuth(req);
@@ -120,10 +95,17 @@ export async function GET(req: NextRequest) {
 
       if (profile.email) {
         try {
-          await sendViaResend({
+          await sendEmail({
             to: profile.email,
             subject: `You're at ${percent}% of this month's AI budget`,
-            html: buildBudgetWarningEmail(profile.plan, spent, cap, percent, `${appUrl}/dashboard/billing`),
+            react: BudgetWarning({
+              plan: profile.plan,
+              spentCents: spent,
+              capCents: cap,
+              percent,
+              billingUrl: `${appUrl}/dashboard/billing`,
+            }),
+            transactional: true,
           });
         } catch (emailErr) {
           log("warn", "Budget warning email failed", { route: ROUTE, userId: profile.id, error: emailErr });

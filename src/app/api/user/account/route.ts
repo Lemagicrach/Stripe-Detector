@@ -21,28 +21,14 @@ import { createHash } from "crypto";
 import Stripe from "stripe";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/server-clients";
-import { sendViaResend } from "@/lib/resend";
+import { sendEmail } from "@/lib/email";
+import { AccountDeleted } from "@/emails/AccountDeleted";
 import { handleApiError, unauthorized, badRequest } from "@/lib/server-error";
 import { log } from "@/lib/logger";
 import { audit } from "@/lib/audit";
 
 const ROUTE = "/api/user/account";
 const STRIPE_API_VERSION = "2026-02-25.clover" as const;
-
-function buildConfirmationEmail(): string {
-  return `<!DOCTYPE html>
-<html>
-  <body style="font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a;padding:24px;">
-    <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:28px;">
-      <h1 style="margin:0 0 16px;font-size:22px;">Your Corvidet account has been deleted</h1>
-      <p style="margin:0 0 12px;line-height:1.6;">Your account and all associated revenue data have been permanently removed from our systems.</p>
-      <p style="margin:0 0 12px;line-height:1.6;">Your Stripe Connect authorization has been revoked, and any active billing subscription has been canceled.</p>
-      <p style="margin:0 0 12px;line-height:1.6;">If this was a mistake, contact <a href="mailto:support@corvidet.com" style="color:#2563eb;">support@corvidet.com</a>. Note that we cannot restore deleted data.</p>
-      <p style="margin:24px 0 0;color:#64748b;font-size:13px;">— Corvidet</p>
-    </div>
-  </body>
-</html>`;
-}
 
 export async function DELETE(req: NextRequest) {
   try {
@@ -161,11 +147,12 @@ export async function DELETE(req: NextRequest) {
 
     log("info", "Account deleted", { route: ROUTE, userId: user.id });
 
-    // Step 7: Confirmation email (fire-and-forget)
-    sendViaResend({
+    // Step 7: Confirmation email (fire-and-forget, transactional)
+    sendEmail({
       to: userEmail,
       subject: "Your Corvidet account has been deleted",
-      html: buildConfirmationEmail(),
+      react: AccountDeleted(),
+      transactional: true,
     }).catch((err) => {
       log("warn", "Deletion confirmation email failed", {
         route: ROUTE,

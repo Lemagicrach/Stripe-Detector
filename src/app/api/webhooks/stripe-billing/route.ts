@@ -1,31 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripeServerClient, getSupabaseAdminClient } from "@/lib/server-clients";
 import { planFromPriceId, PLAN_LIMITS, type PlanTier } from "@/lib/stripe";
-import { sendViaResend } from "@/lib/resend";
+import { sendEmail } from "@/lib/email";
+import { TrialEndingSoon as TrialEndingSoonEmail } from "@/emails/TrialEndingSoon";
 import { log } from "@/lib/logger";
 import { audit } from "@/lib/audit";
 import { notifyUserOnSlack, buildTrialEndingSoon } from "@/lib/slack";
 import type Stripe from "stripe";
 
-function buildTrialEndingEmail(trialEndsAt: Date, billingUrl: string): string {
-  const formatted = trialEndsAt.toLocaleDateString("en-US", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric",
-  });
-  return `<!DOCTYPE html>
-<html>
-  <body style="font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a;padding:24px;">
-    <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:28px;">
-      <h1 style="margin:0 0 16px;font-size:22px;">Your Corvidet Growth trial ends in 3 days</h1>
-      <p style="margin:0 0 12px;line-height:1.6;">Your trial ends on <strong>${formatted}</strong>. To keep your Growth features, add a payment method before then:</p>
-      <p style="margin:20px 0;text-align:center;">
-        <a href="${billingUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">Add payment method</a>
-      </p>
-      <p style="margin:0 0 12px;line-height:1.6;color:#64748b;font-size:14px;">If you don't add a card, your account will revert to the free plan automatically — no charge, no surprises.</p>
-      <p style="margin:24px 0 0;color:#64748b;font-size:13px;">— Corvidet</p>
-    </div>
-  </body>
-</html>`;
-}
 
 const ROUTE = "/api/webhooks/stripe-billing";
 
@@ -136,10 +118,11 @@ export async function POST(req: NextRequest) {
         const billingUrl = `${appUrl}/dashboard/billing`;
         const trialEndsAt = new Date(sub.trial_end * 1000);
         try {
-          await sendViaResend({
+          await sendEmail({
             to: profileRow.email,
             subject: "Your Corvidet Growth trial ends in 3 days",
-            html: buildTrialEndingEmail(trialEndsAt, billingUrl),
+            react: TrialEndingSoonEmail({ trialEndsAt, billingUrl }),
+            transactional: true,
           });
         } catch (emailErr) {
           log("warn", "Trial ending email failed", { route: ROUTE, userId: profileRow.id, error: emailErr });

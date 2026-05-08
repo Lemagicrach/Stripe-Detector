@@ -9,6 +9,9 @@ import { pingHealthcheck } from "@/lib/healthcheck";
 import { withStripeConnect } from "@/lib/stripe-connect";
 import { notifyUserOnSlack, buildCriticalLeakAlert } from "@/lib/slack";
 import { PLAN_LIMITS, type PlanTier } from "@/lib/stripe";
+import { sendEmail } from "@/lib/email";
+import { HighSeverityLeakAlert } from "@/emails/HighSeverityLeakAlert";
+import { buildUnsubscribeUrl } from "@/lib/email-token";
 
 const ROUTE = "/api/cron/detect-revenue-leaks";
 
@@ -78,12 +81,16 @@ export async function GET(request: Request) {
           const criticalLeaks = leaks.filter((l) => l.severity === "critical");
           if (criticalLeaks.length > 0) {
             const { data: profile } = await admin
-              .from("user_profiles").select("plan").eq("id", conn.user_id).single();
-            const userPlan = ((profile as { plan?: string } | null)?.plan ?? "free") as PlanTier;
+              .from("user_profiles").select("plan, email").eq("id", conn.user_id).single();
+            const profileRow = profile as { plan?: string; email?: string } | null;
+            const userPlan = (profileRow?.plan ?? "free") as PlanTier;
+            const totalLost = criticalLeaks.reduce((s, l) => s + l.lostRevenue, 0);
+            const totalRecoverable = criticalLeaks.reduce((s, l) => s + l.recoverableRevenue, 0);
+            const top = [...criticalLeaks].sort((a, b) => b.recoverableRevenue - a.recoverableRevenue)[0];
+            const dashboardUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://corvidet.com"}/dashboard/leaks`;
+
+            // Slack (Business plan only — visible Business-tier feature)
             if (PLAN_LIMITS[userPlan].slackAlerts) {
-              const totalLost = criticalLeaks.reduce((s, l) => s + l.lostRevenue, 0);
-              const totalRecoverable = criticalLeaks.reduce((s, l) => s + l.recoverableRevenue, 0);
-              const top = [...criticalLeaks].sort((a, b) => b.recoverableRevenue - a.recoverableRevenue)[0];
               await notifyUserOnSlack(
                 conn.user_id,
                 buildCriticalLeakAlert({
@@ -91,9 +98,28 @@ export async function GET(request: Request) {
                   totalLostUsd: totalLost,
                   totalRecoverableUsd: totalRecoverable,
                   topTitle: top.title,
-                  dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://corvidet.com"}/dashboard/leaks`,
+                  dashboardUrl,
                 })
               );
+            }
+
+            // Email (all plans, opt-out respected by sendEmail wrapper)
+            if (profileRow?.email) {
+              await sendEmail({
+                to: profileRow.email,
+                userId: conn.user_id,
+                subject: `${criticalLeaks.length} critical revenue leak${criticalLeaks.length > 1 ? "s" : ""} detected`,
+                react: HighSeverityLeakAlert({
+                  count: criticalLeaks.length,
+                  totalLostUsd: totalLost,
+                  totalRecoverableUsd: totalRecoverable,
+                  topTitle: top.title,
+                  dashboardUrl,
+                  unsubscribeUrl: buildUnsubscribeUrl(conn.user_id),
+                }),
+              }).catch((err) => {
+                log("warn", "Critical leak email failed", { route: ROUTE, userId: conn.user_id, error: err });
+              });
             }
           }
         }

@@ -1,5 +1,7 @@
 import Stripe from "stripe";
-import { sendViaResend } from "@/lib/resend";
+import { sendEmail } from "@/lib/email";
+import { MonthlyHealthReport } from "@/emails/MonthlyHealthReport";
+import { buildUnsubscribeUrl } from "@/lib/email-token";
 import { withStripeConnect } from "@/lib/stripe-connect";
 import {
   formatDeltaPercent,
@@ -401,73 +403,6 @@ async function getPreviousRevenue(connectionId: string, periodStart: string): Pr
   return toNumber((data as { total_revenue?: number | string } | null)?.total_revenue);
 }
 
-function buildMonthlyReportEmailHtml(report: MonthlyRevenueHealthReport, reportUrl: string): string {
-  const deltaLabel =
-    report.revenueChangePercent === 0
-      ? "Flat vs previous stored month"
-      : `${formatDeltaPercent(report.revenueChangePercent)} vs previous stored month`;
-  const statusColor =
-    report.healthStatus === "healthy"
-      ? "#10b981"
-      : report.healthStatus === "moderate"
-      ? "#f59e0b"
-      : "#ef4444";
-
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>Your Monthly Revenue Health Report</title></head>
-<body style="font-family:sans-serif;max-width:640px;margin:0 auto;padding:24px;color:#1f2937;background:#f8fafc;">
-  <div style="background:#ffffff;border-radius:12px;padding:32px;border:1px solid #e5e7eb;">
-    <p style="margin:0 0 8px;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;">Corvidet Monthly Revenue Health</p>
-    <h1 style="font-size:24px;margin:0;color:#0f172a;">${report.period}</h1>
-    <p style="margin:8px 0 24px;color:#475569;font-size:14px;">
-      ${report.accountName ?? "Your Stripe account"} is currently marked
-      <strong style="color:${statusColor};text-transform:capitalize;"> ${report.healthStatus}</strong>.
-    </p>
-
-    <table style="width:100%;border-collapse:separate;border-spacing:0 12px;margin-bottom:24px;">
-      <tr>
-        <td style="padding:16px;background:#f8fafc;border-radius:10px;width:50%;">
-          <div style="font-size:12px;color:#64748b;margin-bottom:6px;">Revenue captured</div>
-          <div style="font-size:28px;font-weight:700;color:#0f172a;">${formatReportCurrency(report.totalRevenue, report.currency)}</div>
-          <div style="font-size:12px;color:#64748b;margin-top:6px;">${deltaLabel}</div>
-        </td>
-        <td style="width:12px;"></td>
-        <td style="padding:16px;background:#f8fafc;border-radius:10px;width:50%;">
-          <div style="font-size:12px;color:#64748b;margin-bottom:6px;">Recovered revenue</div>
-          <div style="font-size:28px;font-weight:700;color:#0f172a;">${formatReportCurrency(report.recoveredRevenue, report.currency)}</div>
-          <div style="font-size:12px;color:#64748b;margin-top:6px;">${report.failedPaymentsCount} unresolved failed invoice${report.failedPaymentsCount === 1 ? "" : "s"}</div>
-        </td>
-      </tr>
-    </table>
-
-    <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
-      <tr>
-        <td style="padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Failed payment value</td>
-        <td style="padding:10px 0;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600;">${formatReportCurrency(report.failedPaymentsAmount, report.currency)}</td>
-      </tr>
-      <tr>
-        <td style="padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Active subscriptions</td>
-        <td style="padding:10px 0;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600;">${report.activeSubscriptions.toLocaleString()}</td>
-      </tr>
-      <tr>
-        <td style="padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Canceled in period</td>
-        <td style="padding:10px 0;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600;">${report.canceledSubscriptions.toLocaleString()}</td>
-      </tr>
-      <tr>
-        <td style="padding:10px 0;font-size:14px;color:#64748b;">Churn rate</td>
-        <td style="padding:10px 0;text-align:right;font-weight:600;">${formatReportPercent(report.churnRate)}</td>
-      </tr>
-    </table>
-
-    <a href="${reportUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600;">
-      Review full report
-    </a>
-  </div>
-</body>
-</html>`;
-}
-
 export async function listActiveConnections(userId: string): Promise<ActiveStripeConnection[]> {
   const admin = getSupabaseAdminClient();
   const { data, error } = await admin
@@ -695,10 +630,25 @@ export async function sendMonthlyReportEmail(params: {
   }
 
   const reportUrl = getReportUrl(report.reportId);
-  await sendViaResend({
+  await sendEmail({
     to: profile.email,
+    userId: params.userId,
     subject: `Your ${report.period} revenue health report`,
-    html: buildMonthlyReportEmailHtml(report, reportUrl),
+    react: MonthlyHealthReport({
+      accountName: report.accountName,
+      period: report.period,
+      totalRevenue: report.totalRevenue,
+      failedPaymentsCount: report.failedPaymentsCount,
+      failedPaymentsAmount: report.failedPaymentsAmount,
+      recoveredRevenue: report.recoveredRevenue,
+      activeSubscriptions: report.activeSubscriptions,
+      canceledSubscriptions: report.canceledSubscriptions,
+      churnRate: report.churnRate,
+      revenueChangePercent: report.revenueChangePercent,
+      healthStatus: report.healthStatus,
+      reportUrl,
+      unsubscribeUrl: buildUnsubscribeUrl(params.userId),
+    }),
   });
 
   await trackUsageEvent(params.userId, "monthly_report_email_sent", {

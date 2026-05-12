@@ -9,6 +9,34 @@ import { AlertTriangle } from "lucide-react";
 
 const COOLDOWN_SECONDS = 60;
 
+/**
+ * Map the `?error=<code>` query param to a user-facing message. The OAuth
+ * error codes (invalid_grant, authentication_failed, permission_denied) are
+ * set by /api/stripe/connect when the Stripe token exchange fails and the
+ * middleware bounces the user here because their session is invalid at that
+ * point. Keep these messages in sync with src/app/dashboard/connect/page.tsx.
+ */
+function errorParamMessage(code: string | null): string | null {
+  switch (code) {
+    case "link_expired":
+      return "This link has expired or already been used. Please request a new one.";
+    case "invalid_grant":
+      return "Ce compte Stripe ne peut pas être connecté à Corvidet. Stripe a bloqué " +
+        "la reconnexion de ce compte. Veuillez utiliser un autre compte Stripe " +
+        "ou contacter support@corvidet.com si vous pensez qu'il s'agit d'une erreur.";
+    case "authentication_failed":
+      return "Stripe n'a pas pu authentifier la requête de connexion. Cela vient " +
+        "probablement d'une mauvaise configuration côté Corvidet — réessayez " +
+        "dans quelques minutes ou contactez support@corvidet.com.";
+    case "permission_denied":
+      return "Ce compte Stripe n'a pas accordé les permissions nécessaires à " +
+        "Corvidet. Veuillez retenter la connexion en autorisant l'accès " +
+        "demandé, ou contactez support@corvidet.com.";
+    default:
+      return null;
+  }
+}
+
 /** Map raw Supabase error messages to user-friendly copy */
 function humanizeError(msg: string): { text: string; isRateLimit: boolean } {
   const lower = msg.toLowerCase();
@@ -42,9 +70,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(
-    searchParams.get("error") === "link_expired"
-      ? "This link has expired or already been used. Please request a new one."
-      : null
+    errorParamMessage(searchParams.get("error"))
   );
   const [isRateLimit, setIsRateLimit] = useState(false);
   const [cooldown, setCooldown] = useState(0);

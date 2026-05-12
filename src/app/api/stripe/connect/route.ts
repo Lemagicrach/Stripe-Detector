@@ -105,7 +105,37 @@ export async function GET(req: NextRequest) {
       }
 
       const stripe = getStripeServerClient();
-      const oauth = await stripe.oauth.token({ grant_type: "authorization_code", code });
+      let oauth;
+      try {
+        oauth = await stripe.oauth.token({ grant_type: "authorization_code", code });
+      } catch (err) {
+        // Catch the three Stripe OAuth error types that are user-actionable
+        // (or at least user-facing) and convert them into a 302 redirect to
+        // the connect page so the UI can render a tailored message. Anything
+        // else falls through to handleApiError → 500.
+        const stripeErr = err as { type?: string; code?: string; statusCode?: number };
+        const userFacingError =
+          stripeErr.type === "StripeInvalidGrantError"   ? "invalid_grant"        :
+          stripeErr.type === "StripeAuthenticationError" ? "authentication_failed" :
+          stripeErr.type === "StripePermissionError"     ? "permission_denied"     :
+          null;
+
+        if (!userFacingError) throw err;
+
+        log("error", "Stripe OAuth token exchange failed", {
+          route: "/api/stripe/connect",
+          userId: user.id,
+          errorType: stripeErr.type,
+          stripeErrorCode: stripeErr.code,
+          stripeResponseCode: stripeErr.statusCode,
+          error: err,
+        });
+
+        const redirectUrl = new URL("/dashboard/connect", getAppUrl());
+        redirectUrl.searchParams.set("error", userFacingError);
+        if (stripeErr.code) redirectUrl.searchParams.set("reason", stripeErr.code);
+        return NextResponse.redirect(redirectUrl.toString(), 302);
+      }
 
       if (!oauth.stripe_user_id) {
         return redirectToConnect("error", { reason: "stripe_oauth_failed" });

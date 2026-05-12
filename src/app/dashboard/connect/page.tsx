@@ -27,11 +27,36 @@ function ConnectPageContent() {
     const status = searchParams.get('status')
     const account = searchParams.get('account')
     const reason = searchParams.get('reason')
+    const errorCode = searchParams.get('error')
 
     if (status === 'success' && account) {
       setNotice(`Stripe account ${account} connected successfully! Your first sync is running.`)
     }
-    if (status === 'error') {
+
+    // New flow: ?error=<code> set by the OAuth route when Stripe rejects the
+    // token exchange. Mapped to a user-readable message in French here so the
+    // UI never displays raw Stripe error codes.
+    if (errorCode === 'invalid_grant') {
+      setError(
+        "Ce compte Stripe ne peut pas être connecté à Corvidet. Stripe a bloqué " +
+        "la reconnexion de ce compte. Veuillez utiliser un autre compte Stripe " +
+        "ou contacter support@corvidet.com si vous pensez qu'il s'agit d'une erreur."
+      )
+    } else if (errorCode === 'authentication_failed') {
+      setError(
+        "Stripe n'a pas pu authentifier la requête de connexion. Cela vient " +
+        "probablement d'une mauvaise configuration côté Corvidet — réessayez " +
+        "dans quelques minutes ou contactez support@corvidet.com."
+      )
+    } else if (errorCode === 'permission_denied') {
+      setError(
+        "Ce compte Stripe n'a pas accordé les permissions nécessaires à " +
+        "Corvidet. Veuillez retenter la connexion en autorisant l'accès " +
+        "demandé, ou contactez support@corvidet.com."
+      )
+    } else if (status === 'error') {
+      // Legacy flow: ?status=error&reason=<text> for non-OAuth failures
+      // (state mismatch, DB upsert error, Stripe access_denied, etc.)
       setError(reason || 'Connection failed. Please try again.')
     }
   }, [searchParams])

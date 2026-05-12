@@ -14,28 +14,57 @@ const ROUTE = "/api/webhooks/stripe-billing";
 
 export async function POST(req: NextRequest) {
   const sig = req.headers.get("stripe-signature");
-  const webhookSecret = process.env.STRIPE_BILLING_WEBHOOK_SECRET;
+  // Two signing secrets are tried in order: live first, then test. The test
+  // secret is optional and intended only for idempotency validation from
+  // Stripe Test mode against the production endpoint. The first secret that
+  // verifies wins; the route then tags the dedup row with a "_test" suffix
+  // so live and test event streams stay separable in stripe_events_processed.
+  const liveSecret = process.env.STRIPE_BILLING_WEBHOOK_SECRET;
+  const testSecret = process.env.STRIPE_BILLING_WEBHOOK_SECRET_TEST;
 
-  if (!sig || !webhookSecret) {
-    return NextResponse.json({ error: "Missing stripe-signature or webhook secret" }, { status: 400 });
+  if (!sig) {
+    return NextResponse.json({ error: "Missing stripe-signature" }, { status: 400 });
+  }
+  if (!liveSecret && !testSecret) {
+    log("error", "No webhook secret configured", { route: ROUTE, errorCode: "missing_webhook_secret" });
+    return NextResponse.json({ error: "Webhook not configured" }, { status: 400 });
   }
 
   const stripe = getStripeServerClient();
   const rawBody = await req.text();
 
-  let event: Stripe.Event;
-  try {
-    event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
-  } catch (err) {
-    log("error", "Webhook signature verification failed", { route: ROUTE, error: err });
+  const candidates: Array<{ secret: string; mode: "live" | "test" }> = [];
+  if (liveSecret) candidates.push({ secret: liveSecret, mode: "live" });
+  if (testSecret) candidates.push({ secret: testSecret, mode: "test" });
+
+  let event: Stripe.Event | null = null;
+  let matchedMode: "live" | "test" | null = null;
+  let lastErr: unknown = null;
+  for (const { secret, mode } of candidates) {
+    try {
+      event = stripe.webhooks.constructEvent(rawBody, sig, secret);
+      matchedMode = mode;
+      break;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+
+  if (!event || !matchedMode) {
+    log("error", "Webhook signature verification failed", { route: ROUTE, error: lastErr });
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
+  if (matchedMode === "test") {
+    log("info", "webhook signed with test secret", { route: ROUTE, eventId: event.id, eventType: event.type });
+  }
+
   const admin = getSupabaseAdminClient();
+  const dedupSource = matchedMode === "test" ? "billing_test" : "billing";
 
   const { error: dedupError } = await admin
     .from("stripe_events_processed")
-    .insert({ event_id: event.id, source: "billing" });
+    .insert({ event_id: event.id, source: dedupSource });
 
   if (dedupError) {
     if ((dedupError as { code?: string }).code === "23505") {
